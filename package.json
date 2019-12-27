@@ -1,16 +1,16 @@
 {
-  "_from": "madden-file-reader",
-  "_id": "madden-file-reader@1.0.0",
+  "_from": "madden-file-tools",
+  "_id": "madden-file-tools@1.0.0",
   "_inBundle": false,
   "_integrity": "sha512-RTwyjs/+q3PMn+TvfP2m6losu19ceaoKUuH0ThdWrghu6WwfcrwmeV7/aWttVQwmWCMTi+P1CBdMSTBCqPABpw==",
-  "_location": "/madden-file-reader",
+  "_location": "/madden-file-tools",
   "_phantomChildren": {},
   "_requested": {
     "type": "tag",
     "registry": true,
-    "raw": "madden-file-reader",
-    "name": "madden-file-reader",
-    "escapedName": "madden-file-reader",
+    "raw": "madden-file-tools",
+    "name": "madden-file-tools",
+    "escapedName": "madden-file-tools",
     "rawSpec": "",
     "saveSpec": null,
     "fetchSpec": "latest"
@@ -19,9 +19,9 @@
     "#USER",
     "/"
   ],
-  "_resolved": "https://registry.npmjs.org/madden-file-reader/-/madden-file-reader-1.0.0.tgz",
+  "_resolved": "https://registry.npmjs.org/madden-file-tools/-/madden-file-tools-1.0.0.tgz",
   "_shasum": "32f49ee94ffb13f55b6656ca201a0104e2d81af7",
-  "_spec": "madden-file-reader",
+  "_spec": "madden-file-tools",
   "_where": "C:\\Projects\\madden-franchise-editor",
   "author": "",
   "bundleDependencies": false,
@@ -37,7 +37,7 @@
   },
   "license": "MIT",
   "main": "index.js",
-  "name": "madden-file-reader",
+  "name": "madden-file-tools",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
