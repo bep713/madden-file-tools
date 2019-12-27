@@ -1,0 +1,45 @@
+{
+  "_from": "madden-file-reader",
+  "_id": "madden-file-reader@1.0.0",
+  "_inBundle": false,
+  "_integrity": "sha512-RTwyjs/+q3PMn+TvfP2m6losu19ceaoKUuH0ThdWrghu6WwfcrwmeV7/aWttVQwmWCMTi+P1CBdMSTBCqPABpw==",
+  "_location": "/madden-file-reader",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "madden-file-reader",
+    "name": "madden-file-reader",
+    "escapedName": "madden-file-reader",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/madden-file-reader/-/madden-file-reader-1.0.0.tgz",
+  "_shasum": "32f49ee94ffb13f55b6656ca201a0104e2d81af7",
+  "_spec": "madden-file-reader",
+  "_where": "C:\\Projects\\madden-franchise-editor",
+  "author": "",
+  "bundleDependencies": false,
+  "dependencies": {
+    "dxt-js": "0.0.3",
+    "node-png": "^0.4.3",
+    "parse-dds": "^1.2.1"
+  },
+  "deprecated": false,
+  "description": "A set of APIs to read Madden files, including archives.",
+  "devDependencies": {
+    "chai": "^4.2.0"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "name": "madden-file-reader",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.0"
+}
