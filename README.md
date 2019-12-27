@@ -18,7 +18,7 @@ JS API for reading and extracting Madden files.
 
 
     // to extract an archive
-    //    the callback parameter is a list of inheriting classes
+    //    the promise will return a list of inheriting classes
 
     mft.extractAllFromArchive(ast)
         .then((uncompressedFiles) => {
@@ -27,12 +27,12 @@ JS API for reading and extracting Madden files.
 
 
     // to convert a file
-    //    the callback paramter will be an inheriting class
+    //    the promise will return an inheriting class. In this case, it is a PNGFile.
 
     const ddsFile = ast.archivedFiles[0].uncompressedFile;
     mft.convertFile(ddsFile, 'png')
         .then((pngFile) => {
-            console.log(pngFile);
+            pngFile.save('output-filepath-goes-here');
         });
 
 
