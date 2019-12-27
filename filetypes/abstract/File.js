@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-class MaddenFile {
+class File {
     constructor (filePath, rawContents) {
         this._filePath = filePath;
         this._rawContents = rawContents;
@@ -45,4 +45,4 @@ class MaddenFile {
     };
 };
 
-module.exports = MaddenFile;
+module.exports = File;

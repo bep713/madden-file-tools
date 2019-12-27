@@ -1,7 +1,7 @@
-const MaddenFile = require('./MaddenFile');
+const File = require('./File');
 const ArchivedFile = require('./ArchivedFile');
 
-class MaddenArchive extends MaddenFile {
+class Archive extends File {
     constructor (filePath, rawContents) {
         super(filePath, rawContents);
         this._archivedFiles = [];
@@ -24,4 +24,4 @@ class MaddenArchive extends MaddenFile {
     };
 };
 
-module.exports = MaddenArchive;
+module.exports = Archive;

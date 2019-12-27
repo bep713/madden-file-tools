@@ -1,7 +1,7 @@
 const utilService = require('../services/utilService');
-const MaddenArchive = require('./abstract/MaddenArchive');
+const Archive = require('./abstract/Archive');
 
-class ASTFile extends MaddenArchive {
+class ASTFile extends Archive {
     constructor(filePath, contents) {
         super(filePath, contents);
         this.parse();

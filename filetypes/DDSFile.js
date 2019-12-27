@@ -1,9 +1,9 @@
 const dxt = require('dxt-js');
 const parse = require('parse-dds');
 const { PNG } = require('node-png');
-const MaddenFile = require('./abstract/MaddenFile');
+const File = require('./abstract/File');
 
-class DDSFile extends MaddenFile {
+class DDSFile extends File {
     constructor(filePath, contents) {
         super(filePath, contents);
         this.parse();
@@ -19,7 +19,7 @@ class DDSFile extends MaddenFile {
             if (name.toLowerCase() === 'png') {
                 bufferDxt2Png(this._rawContents.slice(this._header.images[0].offset), this._header.shape[0], this._header.shape[1], this._header.format)
                     .then((contents) => {
-                        resolve(new MaddenFile(null, contents));
+                        resolve(new File(null, contents));
                     })
                     .catch((err) => {
                         reject(err);

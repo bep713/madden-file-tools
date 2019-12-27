@@ -1,6 +1,6 @@
-const MaddenFile = require('./abstract/MaddenFile');
+const File = require('./abstract/File');
 
-class PNGFile extends MaddenFile {
+class PNGFile extends File {
     constructor(filePath, contents) {
         super(filePath, contents);
         this[Symbol.toStringTag] = 'PNGFile';

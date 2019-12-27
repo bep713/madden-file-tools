@@ -2,7 +2,7 @@ const zlib = require('zlib');
 const ASTFile = require('../filetypes/ASTFile');
 const DDSFile = require('../filetypes/DDSFile');
 const PNGFile = require('../filetypes/PNGFile');
-const MaddenFile = require('../filetypes/abstract/MaddenFile');
+const File = require('../filetypes/abstract/File');
 
 let fileService = {};
 
@@ -30,7 +30,7 @@ fileService.createFile = function (fileType, contents, filePath) {
         case 'png':
             return new PNGFile(filePath, contents);
         default:
-            return new MaddenFile(filePath, contents);
+            return new File(filePath, contents);
     }
 };
 
