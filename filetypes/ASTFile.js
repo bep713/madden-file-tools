@@ -2,10 +2,11 @@ const utilService = require('../services/utilService');
 const Archive = require('./abstract/Archive');
 
 class ASTFile extends Archive {
+    
     constructor(filePath, contents) {
         super(filePath, contents);
-        this.parse();
         this[Symbol.toStringTag] = 'ASTFile';
+        this.parse();
     };
 
     parse() {

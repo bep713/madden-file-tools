@@ -11,10 +11,6 @@ class Archive extends File {
         return this._archivedFiles;
     };
 
-    extractAll(outputPath) {
-        throw new Error('Method not implemented.');
-    };
-
     compress() {
         throw new Error('Method not implemented.');
     };

@@ -25,17 +25,23 @@ class File {
     };
 
     parse() {
-        throw new Error('Method not implemented.');
+        
     };
 
     save(filePathOverride) {
-        let pathToSave = filePathOverride ? filePathOverride : this.filePath;
+        return new Promise((resolve, reject) => {
+            let pathToSave = filePathOverride ? filePathOverride : this.filePath;
 
-        if (!pathToSave) {
-            throw new Error('No file path specified. Please call save() with a file path argument.');
-        }
-        
-        fs.writeFileSync(pathToSave, this.rawContents);
+            if (!pathToSave) {
+                reject(new Error('No file path specified. Please call save() with a file path argument.'));
+            }
+            
+            fs.writeFile(pathToSave, this.rawContents, function (err) {
+                if (err) reject(err);
+                
+                resolve();
+            });
+        });
     };
 
     convert(convertTo) {
