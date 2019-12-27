@@ -27,7 +27,8 @@ JS API for reading and extracting Madden files.
 
 
     // to convert a file
-    //    the promise will return an inheriting class. In this case, it is a PNGFile.
+    //    the promise will return an inheriting class.
+    //    in this case, it is a PNGFile.
 
     const ddsFile = ast.archivedFiles[0].uncompressedFile;
     mft.convertFile(ddsFile, 'png')
@@ -38,8 +39,8 @@ JS API for reading and extracting Madden files.
 
 ## Documentation
 
-<!-- ### Diagram
-![class diagram](https://github.com/bep713/madden-file-tools/blob/master/docs/class.png?raw=true) -->
+### Diagram
+![class diagram](https://github.com/bep713/madden-file-tools/blob/master/docs/class.png?raw=true)
 
 ### Main package
 These are the set of methods you'll get when you require the module. See usage for method details.
@@ -54,14 +55,17 @@ Note: the parse() method is automatically called IF it is required by the inheri
 
     // instantiate a new File.
     //     fileContents should be a Node buffer
+
     const file = new File(fileContents, 'optional-path-to-file');
+
 
     let fileContents = file.rawContents;
     let filePath = file.filePath;
     
+
     // save a file
-    //    If no output path is passed, the filename passed above will be used and
-    //    the file will be overwritten.
+    //    If no output path is passed, the filename passed above will be
+    //    used and the file will be overwritten.
 
     file.save('optional-output-path')
         .then(() => {
