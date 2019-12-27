@@ -1,7 +1,8 @@
 class ArchivedFile {
-    constructor(compressedData) {
+    constructor(compressedData, archiveMetadata) {
         this._compressedData = compressedData;
         this._compressionMethod = getCompressionMethod(compressedData);
+        this._archiveMetadata = archiveMetadata;
         this._uncompressedFile = null;
     };
 
@@ -19,6 +20,14 @@ class ArchivedFile {
 
     set uncompressedFile(file) {
         this._uncompressedFile = file;
+    };
+
+    get archiveMetadata() {
+        return this._archiveMetadata;
+    };
+
+    set archiveMetadata(metadata) {
+        this._archiveMetadata = metadata;
     };
 };
 

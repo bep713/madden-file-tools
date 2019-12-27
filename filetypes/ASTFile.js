@@ -58,13 +58,19 @@ class ASTFile extends Archive {
             tocEntry.unknown2 = this.rawContents.slice(currentOffset, currentOffset + this._header.unknown2Length);
             currentOffset += this._header.unknown2Length + 1; // add 1 to ignore the 01 separator at the end
 
+            tocEntry.index = i;
+
             this._toc.push(tocEntry);
         }
+
+        this._toc.sort((a, b) => {
+            return a.startPosition - b.startPosition;
+        });
     };
 
     _parseCompressedData() {
         this._toc.forEach((archiveFileHeader) => {
-            this._addArchivedFile(this.rawContents.slice(archiveFileHeader.startPosition, archiveFileHeader.startPosition + archiveFileHeader.fileSize));
+            this._addArchivedFile(this.rawContents.slice(archiveFileHeader.startPosition, archiveFileHeader.startPosition + archiveFileHeader.fileSize), archiveFileHeader);
         });
     };
 };

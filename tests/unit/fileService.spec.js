@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const expect = require('chai').expect;
-const fileService = require('../services/fileService');
+const fileService = require('../../services/fileService');
 
 const pathToData = path.join(__dirname, 'data/');
 const astFile = fs.readFileSync(path.join(pathToData, 'awards.AST'));
@@ -80,7 +80,11 @@ describe('file service unit tests', () => {
                     expect(ast.archivedFiles[0].uncompressedFile).to.eql(extractedFiles[0]);
                     
                     const medal = fs.readFileSync(path.join(pathToData, 'medal.dds'));
-                    expect(ast.archivedFiles[0].uncompressedFile.rawContents).to.eql(medal);
+                    const medalArchivedFile = ast.archivedFiles.find((file) => {
+                        return file.archiveMetadata.index === 0;
+                    });
+
+                    expect(medalArchivedFile.uncompressedFile.rawContents).to.eql(medal);
                     done();
                 });
         });

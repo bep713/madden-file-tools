@@ -15,8 +15,8 @@ class Archive extends File {
         throw new Error('Method not implemented.');
     };
 
-    _addArchivedFile(compressedData) {
-        this._archivedFiles.push(new ArchivedFile(compressedData));
+    _addArchivedFile(compressedData, metadata) {
+        this._archivedFiles.push(new ArchivedFile(compressedData, metadata));
     };
 };
 

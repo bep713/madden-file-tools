@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const expect = require('chai').expect;
-const DDSFile = require('../filetypes/DDSFile');
+const DDSFile = require('../../filetypes/DDSFile');
 
 const ddsTestPath = path.join(__dirname, 'data/test.dds');
 let testRaw = fs.readFileSync(ddsTestPath);

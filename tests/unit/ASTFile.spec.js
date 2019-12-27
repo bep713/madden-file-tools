@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const expect = require('chai').expect;
-const ASTFile = require('../filetypes/ASTFile');
+const ASTFile = require('../../filetypes/ASTFile');
 
 const awardsPath = path.join(__dirname, 'data/awards.AST');
 const cafePath = path.join(__dirname, 'data/cafe2scriptpod.AST');
@@ -90,44 +90,64 @@ describe('AST File unit tests', () => {
         it ('awards AST parsed correctly', () => {
             expect(awards._toc.length).to.equal(awards.header.numberOfFiles);
 
-            expect(awards._toc[0]).to.eql({
+            const firstToc = awards._toc.find((toc) => {
+                return toc.index === 0;
+            });
+
+            const secondToc = awards._toc.find((toc) => {
+                return toc.index === 1;
+            });
+
+            expect(firstToc).to.eql({
                 'unknown1': null,
                 'id': Buffer.from([0x00, 0x00, 0x00, 0x00, 0x6A, 0x03, 0xD0, 0xBC]),
                 'startPosition': 0x17C70,
                 'fileSize': 0x1986,
-                'unknown2': Buffer.from([0xFA, 0x26])
+                'unknown2': Buffer.from([0xFA, 0x26]),
+                'index': 0
             });
 
-            expect(awards._toc[1]).to.eql({
+            expect(secondToc).to.eql({
                 'unknown1': null,
                 'id': Buffer.from([0x01, 0x00, 0x00, 0x00, 0x6A, 0x03, 0xD0, 0xBC]),
                 'startPosition': 0x195F8,
                 'fileSize': 0x1818,
-                'unknown2': Buffer.from([0x68, 0x28])
+                'unknown2': Buffer.from([0x68, 0x28]),
+                'index': 1
             });
         });
 
         it('cafe AST parsed correctly', () => {
             expect(cafe._toc.length).to.equal(cafe.header.numberOfFiles);
 
-            expect(cafe._toc[0]).to.eql({
+            const firstToc = cafe._toc.find((toc) => {
+                return toc.index === 0;
+            });
+
+            expect(firstToc).to.eql({
                 'unknown1': 0,
                 'id': Buffer.from([0xFD, 0xFF, 0xC5, 0x81, 0xF9, 0x1B, 0x2B, 0x91]),
                 'startPosition': 0x16B8,
                 'fileSize': 0xD15,
-                'unknown2': Buffer.from([0xF9, 0x26])
+                'unknown2': Buffer.from([0xF9, 0x26]),
+                'index': 0
             });
         });
 
         it('coach portrait AST parsed correctly', () => {
             expect(coachPortraits._toc.length).to.equal(coachPortraits.header.numberOfFiles);
 
-            expect(coachPortraits._toc[0]).to.eql({
+            const firstToc = coachPortraits._toc.find((toc) => {
+                return toc.index === 0;
+            });
+
+            expect(firstToc).to.eql({
                 'unknown1': null,
                 'id': Buffer.from([0x00, 0x00, 0x00, 0x00, 0x34, 0x3E, 0xF1, 0x69]),
                 'startPosition': 0x2828,
                 'fileSize': 0xACD0,
-                'unknown2': Buffer.from([0xB0, 0x53, 0x03])
+                'unknown2': Buffer.from([0xB0, 0x53, 0x03]),
+                'index': 0
             });
         });
     });
@@ -138,6 +158,14 @@ describe('AST File unit tests', () => {
             
             const firstArchivedFile = awards.archivedFiles[0];
             expect(firstArchivedFile.compressionMethod).to.equal('zlib');
+        });
+
+        it('archived files are in order based on start position', () => {
+            awards._toc.forEach((toc, index) => {
+                if (index > 0) {
+                    expect(toc.startPosition).to.be.greaterThan(awards._toc[index-1].startPosition);
+                }
+            });
         });
     });
 });
