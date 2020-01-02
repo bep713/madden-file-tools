@@ -269,6 +269,19 @@ describe('AST File unit tests', () => {
                 .pipe(newParser)
         });
 
+        it('does not extract files if extract is set to false', (done) => {
+            const parser = new ASTParser();
+            parser.extract = false;
+
+            parser.on('done', function () {
+                expect(parser._file.archivedFiles.length).to.equal(0);
+                done();
+            });
+
+            fs.createReadStream(awardsPath)
+                .pipe(parser);
+        });
+
         // it('can handle skipping over more bytes than file size if necessary', (done) => {
         //     const newParser = new ASTParser();
         //     newParser.extractByFileId('511d0000');

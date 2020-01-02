@@ -9,6 +9,7 @@ class ASTParser extends stream.Writable {
 
         this._file = new ASTFile();
         this._idsToExtract = [];
+        this._extract = true;
         
         this._currentBufferIndex = 0;
         this._bytes(0x29, this.onheader);
@@ -16,6 +17,14 @@ class ASTParser extends stream.Writable {
 
     get file () {
         return this._file;
+    };
+
+    get extract () {
+        return this._extract;
+    };
+
+    set extract (extract) {
+        this._extract = extract;
     };
 
     extractByFileId(id) {
@@ -115,6 +124,12 @@ class ASTParser extends stream.Writable {
 
         this._file.toc = tocs;
         this.emit('toc', tocs);
+
+        if (!this._extract) {
+            this.emit('done');
+            this._skipBytes(Infinity);
+            return;
+        }
         
         this._bytes(tocs[0].fileSize, function (buf) {
             this._currentBufferIndex += (this._file.header.tableOfContentsLength - this._file.header.tableOfContentsAdditionalOffset);
@@ -187,8 +202,8 @@ class ASTParser extends stream.Writable {
         this._currentBufferIndex += toc.fileSize;
 
         if (tocs.length === index+1) {
-            this._skipBytes(Infinity, function () {});
             this.emit('done');
+            this._skipBytes(Infinity, function () {});
         }
         else {
             this._bytes(tocs[index+1].fileSize, function (buf) {
