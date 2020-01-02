@@ -26,9 +26,14 @@
   "author": "",
   "bundleDependencies": false,
   "dependencies": {
+    "concat-stream": "^2.0.0",
     "dxt-js": "0.0.3",
+    "leb128": "0.0.5",
     "node-png": "^0.4.3",
-    "parse-dds": "^1.2.1"
+    "parse-dds": "^1.2.1",
+    "stream-combiner": "^0.2.2",
+    "stream-parser": "^0.3.1",
+    "through2": "^3.0.1"
   },
   "deprecated": false,
   "description": "A set of APIs to read Madden files, including archives.",

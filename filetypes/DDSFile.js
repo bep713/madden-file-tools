@@ -6,6 +6,7 @@ const File = require('./abstract/File');
 class DDSFile extends File {
     constructor(filePath, contents) {
         super(filePath, contents);
+        this._rawContents = contents;
         this.parse();
         this[Symbol.toStringTag] = 'DDSFile';
     };

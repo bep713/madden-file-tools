@@ -1,34 +1,27 @@
 const fs = require('fs');
-const EventEmitter = require('events').EventEmitter;
 
-class File extends EventEmitter {
-    constructor (stream) {
-        super();
-        // this._filePath = filePath;
-        this._stream = stream;
+class File {
+    constructor (filePath, rawContents) {
+        this._filePath = filePath;
+        this._rawContents = rawContents;
         this._header = {};
-        // this._readStream = fs.createReadStream(this._filePath);
         this[Symbol.toStringTag] = 'MaddenFile';
     };
 
-    // get filePath () {
-    //     return this._filePath;
-    // };
+    get filePath () {
+        return this._filePath;
+    };
+
+    get rawContents () {
+        return this._rawContents;
+    };
 
     get header () {
         return this._header;
     };
 
-    set header (header) {
-        this._header = header;
-    }
-
-    // get size () {
-    //     return this._rawContents.length;
-    // };
-
-    get stream () {
-        return this._stream;
+    get size () {
+        return this._rawContents.length;
     };
 
     parse() {

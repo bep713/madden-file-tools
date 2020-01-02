@@ -1,9 +1,9 @@
-const File = require('./File');
+const File = require('./File_Old');
 const ArchivedFile = require('./ArchivedFile');
 
 class Archive extends File {
-    constructor (stream) {
-        super(stream);
+    constructor (filePath, rawContents) {
+        super(filePath, rawContents);
         this._archivedFiles = [];
     };
 
