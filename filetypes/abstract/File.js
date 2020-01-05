@@ -2,10 +2,10 @@ const fs = require('fs');
 const EventEmitter = require('events').EventEmitter;
 
 class File extends EventEmitter {
-    constructor (stream) {
+    constructor () {
         super();
         // this._filePath = filePath;
-        this._stream = stream;
+        // this._stream = stream;
         this._header = {};
         // this._readStream = fs.createReadStream(this._filePath);
         this[Symbol.toStringTag] = 'MaddenFile';

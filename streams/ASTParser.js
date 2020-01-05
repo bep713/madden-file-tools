@@ -1,22 +1,16 @@
-const Parser = require('stream-parser');
 const stream = require('stream');
 const ASTFile = require('../filetypes/ASTFile');
+const WritableParser = require('./WritableParser');
 
-class ASTParser extends stream.Writable {
+class ASTParser extends WritableParser {
     constructor() {
         super();
-        Parser(this);
 
         this._file = new ASTFile();
         this._idsToExtract = [];
         this._extract = true;
         
-        this._currentBufferIndex = 0;
         this._bytes(0x29, this.onheader);
-    };
-
-    get file () {
-        return this._file;
     };
 
     get extract () {

@@ -1,36 +1,34 @@
-const dxt = require('dxt-js');
-const parse = require('parse-dds');
-const { PNG } = require('node-png');
+// const dxt = require('dxt-js');
+// const parse = require('parse-dds');
+// const { PNG } = require('node-png');
 const File = require('./abstract/File');
 
 class DDSFile extends File {
-    constructor(filePath, contents) {
-        super(filePath, contents);
-        this._rawContents = contents;
-        this.parse();
+    constructor() {
+        super();
         this[Symbol.toStringTag] = 'DDSFile';
     };
 
-    parse() {
-        this._header = parse(this._rawContents.buffer);
-    };
+    // parse() {
+    //     this._header = parse(this._rawContents.buffer);
+    // };
 
-    convert(name) {
-        return new Promise((resolve, reject) => {
-            if (name.toLowerCase() === 'png') {
-                bufferDxt2Png(this._rawContents.slice(this._header.images[0].offset), this._header.shape[0], this._header.shape[1], this._header.format)
-                    .then((contents) => {
-                        resolve(new File(null, contents));
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    })
-            }
-            else {
-                reject('Conversion method does not exist yet. DDS -> ', name);
-            }
-        });
-    };
+    // convert(name) {
+    //     return new Promise((resolve, reject) => {
+    //         if (name.toLowerCase() === 'png') {
+    //             bufferDxt2Png(this._rawContents.slice(this._header.images[0].offset), this._header.shape[0], this._header.shape[1], this._header.format)
+    //                 .then((contents) => {
+    //                     resolve(contents);
+    //                 })
+    //                 .catch((err) => {
+    //                     reject(err);
+    //                 })
+    //         }
+    //         else {
+    //             reject('Conversion method does not exist yet. DDS -> ', name);
+    //         }
+    //     });
+    // };
 };
 
 module.exports = DDSFile;

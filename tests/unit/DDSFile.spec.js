@@ -1,36 +1,45 @@
 const fs = require('fs');
 const path = require('path');
 const expect = require('chai').expect;
-const DDSFile = require('../../filetypes/DDSFile');
+const debug = require('debug')('mft');
 
-const ddsTestPath = path.join(__dirname, 'data/test.dds');
+const concat = require('concat-stream');
+const DDSParser = require('../../streams/DDSParser');
+
+const ddsTestPath = path.join(__dirname, '../data/test.dds');
 let testRaw = fs.readFileSync(ddsTestPath);
 
-let test;
+let parser, test;
 
 describe('DDS File unit tests', () => {
-    beforeEach(() => {
-        test = new DDSFile(ddsTestPath, testRaw);
-        test.parse();
+    before((done) => {
+        parser = new DDSParser();
+        
+        const stream = fs.createReadStream(ddsTestPath);
+
+        stream.on('end', () => {
+            done();
+        });
+
+        stream
+            .pipe(parser)
+            .pipe(concat(function (buf) {
+                
+            }));
     });
 
     it('parses header correctly', () => {
-        expect(test.header).to.not.be.undefined;
-        expect(test.header.format).to.equal('dxt5');
-        expect(test.header.shape).to.eql([512,512]);
-        expect(test.header.images[0]).to.eql({
-            'shape': [512,512],
+        const file = parser._file;
+
+        expect(file.header).to.not.be.undefined;
+        expect(file.header.format).to.equal('dxt5');
+        expect(file.header.height).to.equal(512);
+        expect(file.header.width).to.equal(512);
+        expect(file.header.images[0]).to.eql({
+            'height': 512,
+            'width': 512,
             'offset': 128,
             'length': 262144
-        })
-    });
-
-    it('can convert to a png', (done) => {
-        test.convert('png')
-            .then((obj) => {
-                expect(obj).to.be.a('MaddenFile');
-                expect(obj.rawContents.slice(0, 4)).to.eql(Buffer.from([0x89, 0x50, 0x4E, 0x47]))
-                done();
-            });
+        });
     });
 });

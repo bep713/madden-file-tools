@@ -2,8 +2,8 @@ const Archive = require('./abstract/Archive');
 
 class ASTFile extends Archive {
     
-    constructor(stream) {
-        super(stream);
+    constructor() {
+        super();
         this[Symbol.toStringTag] = 'ASTFile';
 
         this._toc = [];
