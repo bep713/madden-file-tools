@@ -180,10 +180,6 @@ class ASTParser extends WritableParser {
 
         this._file._addArchivedFile(Buffer.from([0x78]), toc);
 
-        if (buf[0].toString('16') !== '78') {
-            // console.log(toc.startPosition, buf.slice(0, 10));
-        }
-
         const fileStream = new stream.Readable();
         fileStream._read = () => {};
         fileStream.push(buf);

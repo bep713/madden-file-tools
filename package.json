@@ -28,7 +28,7 @@
   "dependencies": {
     "concat-stream": "^2.0.0",
     "dxt-js": "0.0.3",
-    "leb128": "0.0.5",
+    "leb": "^0.3.0",
     "node-png": "^0.4.3",
     "parse-dds": "^1.2.1",
     "stream-combiner": "^0.2.2",
