@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const expect = require('chai').expect;
-const debug = require('debug')('mft');
+// const debug = require('debug')('mft');
 
 const concat = require('concat-stream');
 const DDSParser = require('../../streams/DDSParser');

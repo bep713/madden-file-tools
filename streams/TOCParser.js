@@ -1,5 +1,5 @@
 const leb = require('leb');
-const debug = require('debug')('mft');
+// const debug = require('debug')('mft');
 const stream = require('stream');
 const Parser = require('stream-parser');
 
@@ -102,7 +102,7 @@ class TOCParser extends stream.Writable {
                 this._onEntryFields(entry.parent);
                 break;
             default:
-                debug('ENTRY', this._currentBufferIndex.toString(16), buf[0]);
+                // debug('ENTRY', this._currentBufferIndex.toString(16), buf[0]);
                 this._skipBytes(Infinity);
         }
     };
@@ -223,7 +223,7 @@ class TOCParser extends stream.Writable {
                                 });
                             });
                         default:
-                            debug('FIELD', this._currentBufferIndex.toString(16), buf[0])
+                            // debug('FIELD', this._currentBufferIndex.toString(16), buf[0])
                             this._skipBytes(Infinity);
                     }
                 });
@@ -240,6 +240,7 @@ class TOCParser extends stream.Writable {
                 this._onEntryFields(parent);
             }
             else {
+                console.log(entry);
                 this._bytes(1, function (buf) {
                     this._currentBufferIndex += 1;
                     this._onEntryStart(buf, entry.parent, entry.parent._entries);

@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const debug = require('debug')('mft');
+// const debug = require('debug')('mft');
 const concat = require('concat-stream');
 const expect = require('chai').expect;
 

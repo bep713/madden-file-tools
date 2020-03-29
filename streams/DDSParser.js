@@ -3,7 +3,7 @@
     Thank you Jam3 and toji :)
 */
 const streams = require('stream');
-const debug = require('debug')('mft');
+// const debug = require('debug')('mft');
 const Parser = require('stream-parser');
 const DDSFile = require('../filetypes/DDSFile');
 const WritableParser = require('./WritableParser');
