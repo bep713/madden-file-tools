@@ -1,9 +1,8 @@
 class TDBRecord {
     constructor() {
-        super();
-        this[Symbol.toStringTag] = 'TDBField';
-
+        this[Symbol.toStringTag] = 'TDBRecord';
         this._fields = [];
+        this._isPopulated = true;
     };
 
     get fields() {
@@ -11,11 +10,10 @@ class TDBRecord {
     };
 
     set fields(fields) {
-        _removeOldFieldProperties();
-
+        this._removeOldFieldProperties();
         this._fields = fields;
 
-        this._fields.forEach((field) => {
+        fields.forEach((field) => {
             Object.defineProperty(this, field.key, {
                 set: function (value) {
                     field.value = value;
@@ -27,10 +25,22 @@ class TDBRecord {
         });
     };
 
+    get isPopulated() {
+        return this._isPopulated;
+    };
+
+    set isPopulated(isPopulated) {
+        this._isPopulated = isPopulated;
+    };
+
     _removeOldFieldProperties() {
         this._fields.forEach((field) => {
-            delete field.key;
+            delete this[field.key];
         });
+    };
+
+    getFieldByKey(key) {
+        return this._fields.find((field) => { if (field.key === 'ANFP') { console.log('PFNA'); } return field.key === key; });
     };
 };
 

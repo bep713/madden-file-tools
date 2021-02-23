@@ -1,6 +1,15 @@
 const TDBFile = require('../filetypes/TDB/TDBFile');
+const TDBField = require('../filetypes/TDB/TDBField');
 const TDBTable = require('../filetypes/TDB/TDBTable');
+const utilService = require('../services/utilService');
+const TDBRecord = require('../filetypes/TDB/TDBRecord');
 const FileParser = require('../filetypes/abstract/FileParser');
+
+const FIELD_TYPE_STRING = 0;
+const FIELD_TYPE_BINARY = 1;
+const FIELD_TYPE_SINT = 2;
+const FIELD_TYPE_UINT = 3;
+const FIELD_TYPE_FLOAT = 4;
 
 class TDBParser extends FileParser {
     constructor() {
@@ -90,7 +99,7 @@ class TDBParser extends FileParser {
             fieldDefinitions.push({
                 'type': buf.readUInt32BE(i*0x10),
                 'offset': buf.readUInt32BE((i*0x10) + 4),
-                'name': buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12),
+                'name': reverseString(buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12)),
                 'bits': buf.readUInt32BE((i*0x10) + 12)
             });
         }
@@ -114,17 +123,60 @@ class TDBParser extends FileParser {
             });
         }
         else {
-            this.file.addTable(table);
-            this.bytes(0x28, this._onTableHeader);
+            this._onTableComplete(table);
         }
     };
 
     _onTableRecords(buf, table) {
-        const records = [];
+        let numberOfRecordsAllocatedInFile = table.header.maxRecords;
 
-        // for (let i = 0; i < table.header.maxRecords; i++) {
+        if (table.header.dataAllocationType !== 2 && table.header.dataAllocationType !== 6) {
+            numberOfRecordsAllocatedInFile = table.header.currentRecords;
+        }
+
+        let records = [];
+        for (let i = 0; i < numberOfRecordsAllocatedInFile; i++) {
+            let record = new TDBRecord();
+
+            if ((i+1) > table.header.currentRecords) {
+                record.isPopulated = false;
+            }
+
+            const recordBuf = buf.slice((table.header.lengthBytes * i), (table.header.lengthBytes * i) + table.header.lengthBytes);
+            const recordBitArray = utilService.getBitArray(recordBuf);
+
+            let fields = [];
+            for (let j = 0; j < table.fieldDefinitions.length; j++) {
+                let field = new TDBField();
+                field.definition = table.fieldDefinitions[j];
+
+                switch (field.definition.type) {
+                    case FIELD_TYPE_STRING:
+                        field.value = recordBuf.toString('utf8', (field.definition.offset/8), (field.definition.offset + field.definition.bits)/8).replace(/\0/g, '');
+                        break;
+                    case FIELD_TYPE_BINARY:
+                        field.value = recordBuf.slice((field.definition.offset/8), (field.definition.offset + field.definition.bits)/8);
+                        break;
+                    case FIELD_TYPE_SINT:
+                    case FIELD_TYPE_UINT:
+                    case FIELD_TYPE_FLOAT:
+                    default:
+                        field.value = utilService.bin2dec(recordBitArray.slice(field.definition.offset, field.definition.offset + field.definition.bits));
+                        break;
+                }
+
+                fields.push(field);
+            }
             
-        // }
+            record.fields = fields;
+            records.push(record);
+        }
+
+        table.records = records;
+        this._onTableComplete(table);
+    };
+
+    _onTableComplete(table) {
         this.file.addTable(table);
         this.bytes(0x28, this._onTableHeader);
     };

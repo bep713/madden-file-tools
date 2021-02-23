@@ -33,7 +33,9 @@ class TDBTable {
     };
 
     get records() {
-        return this._records;
+        return this._records.filter((record) => { 
+            return record.isPopulated;
+        });
     };
 
     set records(records) {

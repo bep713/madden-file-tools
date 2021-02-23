@@ -1,7 +1,6 @@
 const File = require('../abstract/File');
 
 class TDBFile extends File {
-    
     constructor() {
         super();
         this[Symbol.toStringTag] = 'TDBFile';
@@ -46,7 +45,7 @@ class TDBFile extends File {
 
     _removeOldTableProperties() {
         this._tables.forEach((table) => {
-            delete table.name;
+            delete this[table.name];
         });
     };
 };

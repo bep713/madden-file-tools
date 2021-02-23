@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-// const debug = require('debug')('mft');
 const concat = require('concat-stream');
 const expect = require('chai').expect;
 
@@ -10,12 +9,15 @@ const TDBParser = require('../../streams/TDBParser');
 let dbParser;
 
 describe('TOCFile unit tests', () => {
-    before((done) => {
+    before(function(done) {
+        this.timeout(10000);
+        console.time('parse');
         dbParser = new TDBParser();
 
         const stream = fs.createReadStream(tdbPath);
 
         stream.on('end', () => {
+            console.timeEnd('parse');
             done();
         });
 
@@ -86,9 +88,11 @@ describe('TOCFile unit tests', () => {
         });
 
         describe('AWPL', () => {
+            const tableName = 'AWPL';
+
             it('header', () => {
-                const awpl = dbParser.file.AWPL;
-                expect(awpl.header).to.eql({
+                const table = dbParser.file[tableName];
+                expect(table.header).to.eql({
                     'priorCrc': 3374511333,
                     'dataAllocationType': 2,
                     'lengthBytes': 96,
@@ -107,28 +111,229 @@ describe('TOCFile unit tests', () => {
 
             describe('field definitions', () => {
                 it('correct field length', () => {
-                    const awpl = dbParser.file.AWPL;
-                    expect(awpl.fieldDefinitions.length).to.equal(30);
+                    const table = dbParser.file[tableName];
+                    expect(table.fieldDefinitions.length).to.equal(30);
                 });
 
-                it('1CTS', () => {
-                    const awpl = dbParser.file.AWPL;
-                    const field = awpl.fieldDefinitions[0];
+                it('STC1', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[0];
 
                     expect(field.type).to.equal(3);
                     expect(field.offset).to.equal(0);
-                    expect(field.name).to.equal('1CTS');
+                    expect(field.name).to.equal('STC1');
                     expect(field.bits).to.equal(32);
                 });
 
-                it('DIGC', () => {
-                    const awpl = dbParser.file.AWPL;
-                    const field = awpl.fieldDefinitions[23];
+                it('CGID', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[23];
 
                     expect(field.type).to.equal(3);
                     expect(field.offset).to.equal(708);
-                    expect(field.name).to.equal('DIGC');
+                    expect(field.name).to.equal('CGID');
                     expect(field.bits).to.equal(2);
+                });
+            });
+
+            describe('records', () => {
+                it('correct number of records', () => {
+                    const table = dbParser.file[tableName];
+                    expect(table.records.length).to.equal(49);
+                });
+
+                it('parses first record correctly', () => {
+                    const record = dbParser.file[tableName].records[0];
+
+                    expect(record.STC1).to.equal(0);
+                    expect(record.STI1).to.equal(0);
+                    expect(record.STV1).to.equal(0);
+                    expect(record.STC2).to.equal(0);
+                    expect(record.STI2).to.equal(0);
+                    expect(record.STV2).to.equal(0);
+                    expect(record.STC3).to.equal(0);
+                    expect(record.STI3).to.equal(0);
+                    expect(record.STV3).to.equal(0);
+                    expect(record.STC4).to.equal(0);
+                    expect(record.STI4).to.equal(0);
+                    expect(record.STV4).to.equal(0);
+                    expect(record.STC5).to.equal(0);
+                    expect(record.STI5).to.equal(0);
+                    expect(record.STV5).to.equal(0);
+                    expect(record.STC6).to.equal(0);
+                    expect(record.STI6).to.equal(0);
+                    expect(record.STV6).to.equal(0);
+                    expect(record.STC7).to.equal(0);
+                    expect(record.STI7).to.equal(0);
+                    expect(record.STV7).to.equal(0);
+                    expect(record.PFNA).to.equal('');
+                    expect(record.PLNA).to.equal('');
+                    expect(record.CGID).to.equal(0);
+                    expect(record.PGID).to.equal(2);
+                    expect(record.TGID).to.equal(0);
+                    expect(record.SGNM).to.equal(0);
+                    expect(record.SEWN).to.equal(0);
+                    expect(record.PAas).to.equal(0);
+                    expect(record.PAat).to.equal(0);
+                });
+            });
+        });
+
+        describe('PLRL', () => {
+            const tableName = 'PLRL';
+
+            it('header', () => {
+                const table = dbParser.file[tableName];
+                expect(table.header).to.eql({
+                    'priorCrc': 1835962347,
+                    'dataAllocationType': 26,
+                    'lengthBytes': 8,
+                    'lengthBits': 63,
+                    'zero': 0,
+                    'maxRecords': 1,
+                    'currentRecords': 0,
+                    'unknown2': 65535,
+                    'numFields': 4,
+                    'indexCount': 0,
+                    'zero2': 0,
+                    'zero3': 0,
+                    'headerCrc': 2853884747
+                });
+            });
+
+            describe('field definitions', () => {
+                it('correct field length', () => {
+                    const table = dbParser.file[tableName];
+                    expect(table.fieldDefinitions.length).to.equal(4);
+                });
+
+                it('PGID', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[0];
+
+                    expect(field.type).to.equal(3);
+                    expect(field.offset).to.equal(0);
+                    expect(field.name).to.equal('PGID');
+                    expect(field.bits).to.equal(15);
+                });
+
+                it('REST', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[3];
+
+                    expect(field.type).to.equal(3);
+                    expect(field.offset).to.equal(26);
+                    expect(field.name).to.equal('REST');
+                    expect(field.bits).to.equal(6);
+                });
+            });
+        });
+
+        describe('PCKI', () => {
+            const tableName = 'PCKI';
+
+            it('header', () => {
+                const table = dbParser.file[tableName];
+                expect(table.header).to.eql({
+                    'priorCrc': 1057093969,
+                    'dataAllocationType': 2,
+                    'lengthBytes': 36,
+                    'lengthBits': 287,
+                    'zero': 0,
+                    'maxRecords': 352,
+                    'currentRecords': 77,
+                    'unknown2': 65535,
+                    'numFields': 26,
+                    'indexCount': 0,
+                    'zero2': 0,
+                    'zero3': 0,
+                    'headerCrc': 605203516
+                });
+            });
+
+            describe('field definitions', () => {
+                it('correct field length', () => {
+                    const table = dbParser.file[tableName];
+                    expect(table.fieldDefinitions.length).to.equal(26);
+                });
+
+                it('cka0', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[0];
+
+                    expect(field.type).to.equal(3);
+                    expect(field.offset).to.equal(8);
+                    expect(field.name).to.equal('cka0');
+                    expect(field.bits).to.equal(10);
+                });
+
+                it('cpya', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[8];
+
+                    expect(field.type).to.equal(2);
+                    expect(field.offset).to.equal(75);
+                    expect(field.name).to.equal('cpya');
+                    expect(field.bits).to.equal(18);
+                });
+            });
+
+            describe('records', () => {
+                it('correct record count', () => {
+                    const records = dbParser.file[tableName].records;
+                    expect(records.length).to.equal(77);
+                });
+
+                it('parses fifth record correctly', () => {
+                    const record = dbParser.file[tableName].records[4];
+
+                    expect(record.cka0).to.equal(0);
+                    expect(record.PGID).to.equal(544);
+                    expect(record.STKF).to.equal(0);
+                    expect(record.ckfL).to.equal(0);
+                    expect(record.cplN).to.equal(67);
+                    expect(record.ckea).to.equal(0);
+                    expect(record.ckfa).to.equal(0);
+                    expect(record.ckma).to.equal(0);
+                    expect(record.cpya).to.equal(31345);
+                    expect(record.ckeb).to.equal(0);
+                    expect(record.ckfb).to.equal(0);
+                    expect(record.cktb).to.equal(1);
+                    expect(record.cptb).to.equal(50);
+                    expect(record.ckac).to.equal(0);
+                    expect(record.ckmc).to.equal(0);
+                    expect(record.ckad).to.equal(0);
+                    expect(record.ckmd).to.equal(0);
+                    expect(record.ckae).to.equal(0);
+                    expect(record.ckme).to.equal(0);
+                    expect(record.cknk).to.equal(8);
+                    expect(record.cpbl).to.equal(1);
+                    expect(record.ckem).to.equal(0);
+                    expect(record.ckfm).to.equal(0);
+                    expect(record.cpat).to.equal(727);
+                    expect(record.cppt).to.equal(185);
+                    expect(record.cpny).to.equal(2878);
+                });
+            });
+        });
+
+        describe('PLAY', () => {
+            const tableName = 'PLAY';
+
+            describe('records', () => {
+                it('correct record count', () => {
+                    const records = dbParser.file[tableName].records;
+                    expect(records.length).to.equal(2585);
+                });
+
+                it('parses Charles Tillman', () => {
+                    const record = dbParser.file[tableName].records[15];
+
+                    expect(record.PSA0).to.equal(188);
+                    expect(record.PSB0).to.equal(300);
+                    expect(record.PFNA).to.equal('Charles');
+                    expect(record.PLNA).to.equal('Tillman');
+                    expect(record.PHTN).to.equal('Copperas Cove');
                 });
             });
         });

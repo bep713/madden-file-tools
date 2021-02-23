@@ -1,11 +1,11 @@
 class TDBField {
-    constructor(key, value, offset) {
-        super();
+    constructor() {
         this[Symbol.toStringTag] = 'TDBField';
 
-        this._key = key;
-        this._offset = offset;
-        this._raw = raw;
+        this._key = null;
+        this._definition = null;
+        this._raw = null;
+        this._value = null;
     };
 
     get key() {
@@ -16,12 +16,23 @@ class TDBField {
         this._key = key;
     };
 
-    get offset() {
-        return this._offset;
+    // Alias for key
+    get name() {
+        return this.key;
     };
 
-    set offset(offset) {
-        this._offset = offset;
+    // Alias for key
+    set name(name) {
+        this.key = name;
+    };
+
+    get definition() {
+        return this._definition;
+    };
+
+    set definition(definition) {
+        this._definition = definition;
+        this._key = definition.name;
     };
 
     get raw() {
@@ -40,6 +51,14 @@ class TDBField {
     // Alias for raw
     set unformattedValue(raw) {
         this.raw = raw;
+    };
+
+    get value() {
+        return this._value;
+    };
+
+    set value(value) {
+        this._value = value;
     };
 };
 
