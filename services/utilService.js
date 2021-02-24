@@ -1,3 +1,5 @@
+const sjcl = require('./sjcl/sjcl');
+
 let utilService = {};
 
 utilService.intersection = function (arrayOfArrays) {
@@ -17,10 +19,8 @@ utilService.dec2bin = function (dec, len) {
   return bin;
 };
 
-utilService.bin2dec = function (binary) {
-  if (!utilService.isString(binary)) { throw new Error(`Argument invalid - must be of type string. You passed in a ${typeof binary}.`)}
-  else if (!utilService.stringOnlyContainsBinaryDigits(binary)) { throw new Error(`Argument invalid - string must only contain binary digits.`)}
-  return parseInt(binary, 2);
+utilService.bin2dec = function (a, bstart, blength) {
+  return sjcl.bitArray.extract(a, bstart, blength);
 };
 
 utilService.bin2Float = function (binary) {
@@ -113,20 +113,7 @@ utilService.binaryBlockToDecimalBlock = function (binary) {
 };
 
 utilService.getBitArray = function (data) {
-  let arr = [...data];
-
-  try {
-    const bits = arr.map((decimal) => {
-      return (decimal).toString(2).padStart(8, '0');
-    }).reduce((prev, curr, idx) => {
-      return prev + curr;
-    });
-  
-    return bits;
-  }
-  catch(err) {
-    return null;
-  }
+  return sjcl.codec.bytes.toBits(data);
 };
 
 utilService.replaceAt = function (oldValue, index, value) {

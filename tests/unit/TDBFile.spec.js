@@ -137,6 +137,13 @@ describe('TOCFile unit tests', () => {
             });
 
             describe('records', () => {
+                before((done) => {
+                    dbParser.file[tableName].readRecords()
+                        .then(() => { 
+                            done(); 
+                        });
+                });
+
                 it('correct number of records', () => {
                     const table = dbParser.file[tableName];
                     expect(table.records.length).to.equal(49);
@@ -175,6 +182,21 @@ describe('TOCFile unit tests', () => {
                     expect(record.SEWN).to.equal(0);
                     expect(record.PAas).to.equal(0);
                     expect(record.PAat).to.equal(0);
+                });
+
+                describe('edit records', () => {
+                    it('can edit integers', () => {
+                        const record = dbParser.file[tableName].records[0];
+                        record.STC1 = 20;
+    
+                        expect(record.STC1).to.equal(20);
+                    });
+
+                    it('can edit strings', () => {
+                        const record = dbParser.file[tableName].records[0];
+                        record.PFNA = 'Test';
+                        expect(record.PFNA).to.equal('Test');
+                    });
                 });
             });
         });
@@ -279,6 +301,13 @@ describe('TOCFile unit tests', () => {
             });
 
             describe('records', () => {
+                before((done) => {
+                    dbParser.file[tableName].readRecords()
+                        .then(() => { 
+                            done(); 
+                        });
+                });
+
                 it('correct record count', () => {
                     const records = dbParser.file[tableName].records;
                     expect(records.length).to.equal(77);
@@ -321,6 +350,15 @@ describe('TOCFile unit tests', () => {
             const tableName = 'PLAY';
 
             describe('records', () => {
+                before((done) => {
+                    console.time('read PLAY records');
+                    dbParser.file[tableName].readRecords()
+                        .then(() => {
+                            console.timeEnd('read PLAY records');
+                            done(); 
+                        });
+                });
+                
                 it('correct record count', () => {
                     const records = dbParser.file[tableName].records;
                     expect(records.length).to.equal(2585);

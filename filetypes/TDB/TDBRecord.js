@@ -1,7 +1,7 @@
 class TDBRecord {
     constructor() {
         this[Symbol.toStringTag] = 'TDBRecord';
-        this._fields = [];
+        this._fields = {};
         this._isPopulated = true;
     };
 
@@ -10,19 +10,7 @@ class TDBRecord {
     };
 
     set fields(fields) {
-        this._removeOldFieldProperties();
         this._fields = fields;
-
-        fields.forEach((field) => {
-            Object.defineProperty(this, field.key, {
-                set: function (value) {
-                    field.value = value;
-                },
-                get: function () {
-                    return field.value;
-                }
-            });
-        });
     };
 
     get isPopulated() {
@@ -31,12 +19,6 @@ class TDBRecord {
 
     set isPopulated(isPopulated) {
         this._isPopulated = isPopulated;
-    };
-
-    _removeOldFieldProperties() {
-        this._fields.forEach((field) => {
-            delete this[field.key];
-        });
     };
 
     getFieldByKey(key) {
