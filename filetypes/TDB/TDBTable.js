@@ -1,12 +1,7 @@
 const TDBField = require('./TDBField');
 const TDBRecord = require('./TDBRecord');
+const { BitView } = require('bit-buffer');
 const utilService = require('../../services/utilService');
-
-const FIELD_TYPE_STRING = 0;
-const FIELD_TYPE_BINARY = 1;
-const FIELD_TYPE_SINT = 2;
-const FIELD_TYPE_UINT = 3;
-const FIELD_TYPE_FLOAT = 4;
 
 class TDBTable {
     constructor() {
@@ -16,7 +11,9 @@ class TDBTable {
         this._header = {};
         this._fieldDefinitions = [];
         this._records = [];
-        this._tableBuffer = null;
+        this._headerBuffer = null;
+        this._fieldDefinitionBuffer = null;
+        this._dataBuffer = null;
     };
 
     get name() {
@@ -53,12 +50,28 @@ class TDBTable {
         this._records = records;
     };
 
-    get tableBuffer() {
-        return this._tableBuffer;
+    get dataBuffer() {
+        return this._dataBuffer;
     };
 
-    set tableBuffer(buffer) {
-        this._tableBuffer = buffer;
+    set dataBuffer(buffer) {
+        this._dataBuffer = buffer;
+    };
+
+    get headerBuffer() {
+        return this._headerBuffer;
+    };
+
+    set headerBuffer(buffer) {
+        this._headerBuffer = buffer;
+    };
+
+    get fieldDefinitionBuffer() {
+        return this._fieldDefinitionBuffer;
+    };
+
+    set fieldDefinitionBuffer(buffer) {
+        this._fieldDefinitionBuffer = buffer;
     };
 
     readRecords() {
@@ -77,60 +90,35 @@ class TDBTable {
                     record.isPopulated = false;
                 }
 
-                const recordBuf = this._tableBuffer.slice((this.header.lengthBytes * i), (this.header.lengthBytes * i) + this.header.lengthBytes);
-                const recordBitArray = utilService.getBitArray(recordBuf);
+                const recordBuf = this._dataBuffer.slice((this.header.lengthBytes * i), (this.header.lengthBytes * i) + this.header.lengthBytes);
+                record.recordBuffer = recordBuf;
 
-                let fields = {};
+                const recordBitArray = new BitView(recordBuf, recordBuf.byteOffset);
+                recordBitArray.bigEndian = true;
+
                 for (let j = 0; j < this.fieldDefinitions.length; j++) {
                     let field = new TDBField();
                     field.definition = this.fieldDefinitions[j];
+                    field.raw = recordBuf;
+                    field.rawBits = recordBitArray;
 
-                    switch (field.definition.type) {
-                        case FIELD_TYPE_STRING:
-                            field.value = recordBuf.toString('utf8', (field.definition.offset/8), (field.definition.offset + field.definition.bits)/8).replace(/\0/g, '');
-                            break;
-                        case FIELD_TYPE_BINARY:
-                            field.value = recordBuf.slice((field.definition.offset/8), (field.definition.offset + field.definition.bits)/8);
-                            break;
-                        case FIELD_TYPE_SINT:
-                        case FIELD_TYPE_UINT:
-                        case FIELD_TYPE_FLOAT:
-                        default:
-                            field.value = utilService.bin2dec(recordBitArray, field.definition.offset, field.definition.bits);
-                            break;
-                    }
-
-                    fields[field.key] = field;
+                    field.isChanged = false;
+                    record.fields[field.name] = field;
                 }
-
-                record.fields = fields;
-
+                
                 records.push(new Proxy(record, {
                     get: function (target, prop, receiver) {
-                        if (prop in record) {
-                            return record[prop];
-                        }
-                        else {
-                            const field = record.fields[prop];
-
-                            if (field) {
-                                return field.value;
-                            }
-                            else {
-                                return null;
-                            }
-                        }
+                        return record.fields[prop] !== undefined ? record.fields[prop].value : record[prop] !== undefined ? record[prop] : null;
                     },
                     set: function (target, prop, receiver) {
-                        if (prop in record) {
-                            return record[prop];
+                        if (record.fields[prop] !== undefined) {
+                            record.fields[prop].value = receiver;
                         }
                         else {
-                            const field = record.fields[prop];
-                            if (!field) { return; }
-                            field.value = receiver;
-                            target.isChanged = true;
+                            record[prop] = receiver;
                         }
+
+                        return true;
                     }
                 }));
             }

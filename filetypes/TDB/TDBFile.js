@@ -7,6 +7,10 @@ class TDBFile extends File {
 
         this._definitions = [];
         this._tables = [];
+
+        this._definitionBuffer = null;
+        this._headerBuffer = null;
+        this._eofCrcBuffer = null;
     };
 
     get definitions() {
@@ -47,6 +51,30 @@ class TDBFile extends File {
         this._tables.forEach((table) => {
             delete this[table.name];
         });
+    };
+
+    get definitionBuffer() {
+        return this._definitionBuffer;
+    };
+
+    set definitionBuffer(buffer) {
+        this._definitionBuffer = buffer;
+    };
+
+    get headerBuffer() {
+        return this._headerBuffer;
+    };
+
+    set headerBuffer(buffer) {
+        this._headerBuffer = buffer;
+    };
+
+    get eofCrcBuffer() {
+        return this._eofCrcBuffer;
+    };
+
+    set eofCrcBuffer(buffer) {
+        this._eofCrcBuffer = buffer;
     };
 };
 

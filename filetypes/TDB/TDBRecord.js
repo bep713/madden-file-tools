@@ -3,6 +3,7 @@ class TDBRecord {
         this[Symbol.toStringTag] = 'TDBRecord';
         this._fields = {};
         this._isPopulated = true;
+        this._recordBuffer = null;
     };
 
     get fields() {
@@ -21,8 +22,16 @@ class TDBRecord {
         this._isPopulated = isPopulated;
     };
 
+    get recordBuffer() {
+        return this._recordBuffer;
+    };
+
+    set recordBuffer(buffer) {
+        this._recordBuffer = buffer;
+    };
+
     getFieldByKey(key) {
-        return this._fields.find((field) => { if (field.key === 'ANFP') { console.log('PFNA'); } return field.key === key; });
+        return this._fields[key];
     };
 };
 

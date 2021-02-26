@@ -1,3 +1,11 @@
+const { BitView } = require('bit-buffer');
+
+const FIELD_TYPE_STRING = 0;
+const FIELD_TYPE_BINARY = 1;
+const FIELD_TYPE_SINT = 2;
+const FIELD_TYPE_UINT = 3;
+const FIELD_TYPE_FLOAT = 4;
+
 class TDBField {
     constructor() {
         this[Symbol.toStringTag] = 'TDBField';
@@ -5,7 +13,9 @@ class TDBField {
         this._key = null;
         this._definition = null;
         this._raw = null;
+        this._rawBits = null;
         this._value = null;
+        this._isChanged = false;
     };
 
     get key() {
@@ -43,6 +53,14 @@ class TDBField {
         this._raw = raw;
     };
 
+    get rawBits() {
+        return this._rawBits;
+    };
+
+    set rawBits(rawBits) {
+        this._rawBits = rawBits;
+    };
+
     // Alias for raw
     get unformattedValue() {
         return this.raw;
@@ -54,11 +72,46 @@ class TDBField {
     };
 
     get value() {
-        return this._value;
+        switch (this.definition.type) {
+            case FIELD_TYPE_STRING:
+                return this._raw.toString('utf8', (this.definition.offset/8), (this.definition.offset + this.definition.bits)/8).replace(/\0/g, '');
+            case FIELD_TYPE_BINARY:
+                return this._raw.slice((this.definition.offset/8), (this.definition.offset + this.definition.bits)/8);
+            case FIELD_TYPE_SINT:
+            case FIELD_TYPE_UINT:
+            case FIELD_TYPE_FLOAT:
+            default:
+                return this._rawBits.getBits(this.definition.offset, this.definition.bits);
+        }
     };
 
     set value(value) {
-        this._value = value;
+        switch (this.definition.type) {
+            case FIELD_TYPE_STRING:
+                const hexStr = value.split('').map((char) => {
+                    return char.charCodeAt(0);
+                });
+                this._raw.set(new Uint8Array(hexStr), this.definition.offset/8);
+                break;
+            case FIELD_TYPE_BINARY:
+                this._raw = value;
+                break;
+            case FIELD_TYPE_SINT:
+            case FIELD_TYPE_UINT:
+            case FIELD_TYPE_FLOAT:
+            default:
+                this._rawBits.setBits(this.definition.offset, value, this.definition.bits);
+        }
+
+        this._isChanged = true;
+    };
+
+    get isChanged() {
+        return this._isChanged;
+    };
+
+    set isChanged(isChanged) {
+        this._isChanged = isChanged;
     };
 };
 

@@ -24,6 +24,7 @@ class TDBParser extends FileParser {
         }
 
         this.file.header = header;
+        this.file.headerBuffer = buf;
 
         this.bytes((header.numTables * 0x8), this._onDefinitions);
     };
@@ -45,6 +46,7 @@ class TDBParser extends FileParser {
         }
 
         this.file.definitions = definitions;
+        this.file.definitionBuffer = buf;
         this.tableDataStart = this.currentBufferIndex;
 
         this.bytes(0x28, this._onTableHeader);
@@ -59,6 +61,7 @@ class TDBParser extends FileParser {
         });
 
         table.name = tableDefinition.name;
+        table.headerBuffer = buf;
 
         table.header = {
             'priorCrc': buf.readUInt32BE(0),
@@ -76,14 +79,9 @@ class TDBParser extends FileParser {
             'headerCrc': buf.readUInt32BE(36)
         };
 
-        if (table.header.lengthBytes > 0) {
-            this.bytes(table.header.numFields * 0x10, (buf) => {
-                this._onTableFieldDefinitions(buf, table);
-            });
-        }
-        else {
-            this.skipBytes(Infinity);
-        }
+        this.bytes(table.header.numFields * 0x10, (buf) => {
+            this._onTableFieldDefinitions(buf, table);
+        });
     };
 
     _onTableFieldDefinitions(buf, table) {
@@ -99,6 +97,7 @@ class TDBParser extends FileParser {
         }
 
         table.fieldDefinitions = fieldDefinitions;
+        table.fieldDefinitionBuffer = buf;
 
         let numberOfBytesToReadNext = table.header.lengthBytes * table.header.currentRecords;
 
@@ -119,17 +118,28 @@ class TDBParser extends FileParser {
         else {
             this._onTableComplete(table);
         }
-    };
+    };da
 
     _onTableRecords(buf, table) {
-        table.tableBuffer = buf;
+        table.dataBuffer = buf;
         this._onTableComplete(table);
     };
 
     _onTableComplete(table) {
         this.file.addTable(table);
         this.emit('table', table);
-        this.bytes(0x28, this._onTableHeader);
+
+        if (this.file.tables.length === this.file.header.numTables) {
+            this.bytes(0x4, this._onEofCrc);
+        }
+        else {
+            this.bytes(0x28, this._onTableHeader);
+        }
+    };
+
+    _onEofCrc(buf) {
+        this.file.eofCrcBuffer = buf;
+        this.skipBytes(Infinity);
     };
 };
 

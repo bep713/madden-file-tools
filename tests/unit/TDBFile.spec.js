@@ -8,7 +8,7 @@ const TDBParser = require('../../streams/TDBParser');
 
 let dbParser;
 
-describe('TOCFile unit tests', () => {
+describe('TDB File unit tests', () => {
     before(function(done) {
         this.timeout(10000);
         console.time('parse');
@@ -79,6 +79,12 @@ describe('TOCFile unit tests', () => {
                 'name': 'UQIO',
                 'offset': 4119976
             });
+        });
+    });
+
+    describe('EOF CRC', () => {
+        it('expected EOF CRC', () => {
+            expect(dbParser.file.eofCrcBuffer).to.eql(Buffer.from([0x00, 0x06, 0x0A, 0x00]));
         });
     });
 
@@ -188,13 +194,36 @@ describe('TOCFile unit tests', () => {
                     it('can edit integers', () => {
                         const record = dbParser.file[tableName].records[0];
                         record.STC1 = 20;
-    
+                        expect(record.STC1).to.equal(20);
+
+                        console.time('get integer');
+                        record.fields['STC2'].value;
+                        console.timeEnd('get integer');
+
+                        console.time('set integer');
+                        record.fields['STC2'].value = 25;
+                        console.timeEnd('set integer');
+
+                        expect(record.STC2).to.equal(25);
+                    });
+
+                    it('can edit integers - method #2', () => {
+                        const record = dbParser.file[tableName].records[0];
+                        record.fields['STC1'].value = 20;
                         expect(record.STC1).to.equal(20);
                     });
 
                     it('can edit strings', () => {
                         const record = dbParser.file[tableName].records[0];
-                        record.PFNA = 'Test';
+
+                        console.time('get string');
+                        record.fields['PFNA'].value
+                        console.timeEnd('get string');
+
+                        console.time('set string');
+                        record.fields['PFNA'].value = 'Test';
+                        console.timeEnd('set string');
+
                         expect(record.PFNA).to.equal('Test');
                     });
                 });
