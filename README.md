@@ -14,34 +14,39 @@ This package is useful for parsing the following files:
     const helper = new TDBHelper();
     helper.load(tdbPath)
         .then((file) => {
-            // You have access to all the tables and records here.
-        
+            // You have access to all the tables here.
+            
             // Access individual table
             const awplTable = file.AWPL;
                 // Alternative: file.tables[0];
                 // `tables` is just an array.
 
-
-            // Access field values
-            const firstStc1Field = file.AWPL.records[0].fields['STC1'].value;
-                // Or file.AWPL.records[0].fields.STC1.value;
-
-                // Alternative: file.AWPL.records[0].STC1;
-                // The alternative is nicer to use, but less performant.
-
-
-            // Set field values
-            file.AWPL.records[0].fields['STC1'].value = 20;
-
-                // Alternative: file.AWPL.records[0].STC1 = 20;
-                // Again, this way is a little slower, but is nicer to write.
-            });
-
-            // Save the file
-            helper.save([optional new file here, otherwise overwrite])
+            // To get access to the records, you need to read them in by each table. Tables are not automatically read due to memory constraints.
+            file.AWPL.readRecords()
                 .then(() => {
-                    // File has been saved here.
+                    // Here you have access to all the AWPL records and data.
+                    
+                    // Access field values
+                    const firstStc1Field = file.AWPL.records[0].fields['STC1'].value;
+                        // Or file.AWPL.records[0].fields.STC1.value;
+
+                        // Alternative: file.AWPL.records[0].STC1;
+                        // The alternative is nicer to use, but less performant.
+
+
+                    // Set field values
+                    file.AWPL.records[0].fields['STC1'].value = 20;
+
+                        // Alternative: file.AWPL.records[0].STC1 = 20;
+                        // Again, this way is a little slower, but is nicer to write.
+
+                    // Save the file
+                    helper.save([optional new file here, otherwise overwrite])
+                        .then(() => {
+                            // File has been saved here.
+                        });
                 });
+        });
 
 ### Read HC09 Files
 The Head Coach 09 save is a little different from the others. It does not contain the DB file at the very beginning, so I've included a nice helper to load and save.
@@ -90,5 +95,3 @@ The Head Coach 09 save is a little different from the others. It does not contai
 
     stream
         .pipe(parser);
-
-## Documentation
