@@ -28,95 +28,95 @@ describe('TDB Writer unit tests', () => {
             .pipe(dbParser);
     });
 
-    // describe('no changes to file', () => {
-    //     before(function (done) {
-    //         this.timeout(10000);
-    //         bufferToCompare = tdbFile;
-    //         generateOutputBuffer(done);
-    //     });
-
-    //     testBuffers();
-    // });
-
-    // describe('single change', () => {
-    //     before(function (done) {
-    //         this.timeout(10000);
-
-    //         bufferToCompare = tdbFileOneChange;
-
-    //         dbParser.file.AWPL.readRecords()
-    //             .then(() => {
-    //                 dbParser.file.AWPL.records[0].fields['STC1'].value = 20;
-    //                 generateOutputBuffer(done);
-    //             });
-    //     });
-
-    //     testBuffers();
-    // });
-
-    // describe('make changes on the last table', () => {
-    //     before(function (done) {
-    //         this.timeout(10000);
-
-    //         bufferToCompare = tdbFileChangeLastTable;
-
-    //         dbParser.file.AWPL.records[0].fields['STC1'].value = 0;
-
-    //         dbParser.file.UQIO.readRecords()
-    //             .then(() => {
-    //                 dbParser.file.UQIO.records[2].fields['QITM'].value = 102;
-    //                 dbParser.file.UQIO.records[2].fields['QIIA'].value = 0;
-    //                 dbParser.file.UQIO.records[20].fields['QIIA'].value = 0;
-    //                 dbParser.file.UQIO.records[113].fields['QITM'].value = 99;
-    //                 dbParser.file.UQIO.records[151].fields['QIEA'].value = 1;
-    //                 generateOutputBuffer(done);
-    //             });
-    //     });
-
-    //     testBuffers();
-    // });
-
-    describe('HC09 test', () => {
-        it('test change name', (done) => {
-            const readStream = fs.createReadStream(tdbPath);
-            const parser = new TDBParser();
-    
-            readStream.on('end', () => {
-                console.timeEnd('read');
-
-                console.time('read records');
-                const play = parser.file.PLAY;
-    
-                play.readRecords()
-                    .then(() => {
-                        console.timeEnd('read records');
-
-                        // const firstRecord = ;
-                        
-                        console.time('modifications');
-                        parser.file.PLAY.records[0].fields['PFNA'].value = 'Test';
-                        parser.file.PLAY.records[0].fields['PLNA'].value = 'Testson';
-                        console.timeEnd('modifications');
-    
-                        console.time('init writer');
-                        const writer = new TDBWriter(parser.file);
-                        console.timeEnd('init writer');
-
-                        const writeStream = fs.createWriteStream(path.join(__dirname, testWritePath));
-
-                        writeStream.on('close', () => {
-                            done();
-                        });
-    
-                        writer
-                            .pipe(writeStream);
-                    });
-            });
-
-            console.time('read');
-            readStream.pipe(parser);
+    describe('no changes to file', () => {
+        before(function (done) {
+            this.timeout(10000);
+            bufferToCompare = tdbFile;
+            generateOutputBuffer(done);
         });
+
+        testBuffers();
     });
+
+    describe('single change', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            bufferToCompare = tdbFileOneChange;
+
+            dbParser.file.AWPL.readRecords()
+                .then(() => {
+                    dbParser.file.AWPL.records[0].fields['STC1'].value = 20;
+                    generateOutputBuffer(done);
+                });
+        });
+
+        testBuffers();
+    });
+
+    describe('make changes on the last table', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            bufferToCompare = tdbFileChangeLastTable;
+
+            dbParser.file.AWPL.records[0].fields['STC1'].value = 0;
+
+            dbParser.file.UQIO.readRecords()
+                .then(() => {
+                    dbParser.file.UQIO.records[2].fields['QITM'].value = 102;
+                    dbParser.file.UQIO.records[2].fields['QIIA'].value = 0;
+                    dbParser.file.UQIO.records[20].fields['QIIA'].value = 0;
+                    dbParser.file.UQIO.records[113].fields['QITM'].value = 99;
+                    dbParser.file.UQIO.records[151].fields['QIEA'].value = 1;
+                    generateOutputBuffer(done);
+                });
+        });
+
+        testBuffers();
+    });
+
+    // describe('HC09 test', () => {
+    //     it('test change name', (done) => {
+    //         const readStream = fs.createReadStream(tdbPath);
+    //         const parser = new TDBParser();
+    
+    //         readStream.on('end', () => {
+    //             console.timeEnd('read');
+
+    //             console.time('read records');
+    //             const play = parser.file.PLAY;
+    
+    //             play.readRecords()
+    //                 .then(() => {
+    //                     console.timeEnd('read records');
+
+    //                     // const firstRecord = ;
+                        
+    //                     console.time('modifications');
+    //                     parser.file.PLAY.records[0].fields['PFNA'].value = 'Test';
+    //                     parser.file.PLAY.records[0].fields['PLNA'].value = 'Testson';
+    //                     console.timeEnd('modifications');
+    
+    //                     console.time('init writer');
+    //                     const writer = new TDBWriter(parser.file);
+    //                     console.timeEnd('init writer');
+
+    //                     const writeStream = fs.createWriteStream(path.join(__dirname, testWritePath));
+
+    //                     writeStream.on('close', () => {
+    //                         done();
+    //                     });
+    
+    //                     writer
+    //                         .pipe(writeStream);
+    //                 });
+    //         });
+
+    //         console.time('read');
+    //         readStream.pipe(parser);
+    //     });
+    // });
 
     function generateOutputBuffer(done) {
         outputBuffer = Buffer.from([]);
