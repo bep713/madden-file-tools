@@ -76,48 +76,6 @@ describe('TDB Writer unit tests', () => {
         testBuffers();
     });
 
-    // describe('HC09 test', () => {
-    //     it('test change name', (done) => {
-    //         const readStream = fs.createReadStream(tdbPath);
-    //         const parser = new TDBParser();
-    
-    //         readStream.on('end', () => {
-    //             console.timeEnd('read');
-
-    //             console.time('read records');
-    //             const play = parser.file.PLAY;
-    
-    //             play.readRecords()
-    //                 .then(() => {
-    //                     console.timeEnd('read records');
-
-    //                     // const firstRecord = ;
-                        
-    //                     console.time('modifications');
-    //                     parser.file.PLAY.records[0].fields['PFNA'].value = 'Test';
-    //                     parser.file.PLAY.records[0].fields['PLNA'].value = 'Testson';
-    //                     console.timeEnd('modifications');
-    
-    //                     console.time('init writer');
-    //                     const writer = new TDBWriter(parser.file);
-    //                     console.timeEnd('init writer');
-
-    //                     const writeStream = fs.createWriteStream(path.join(__dirname, testWritePath));
-
-    //                     writeStream.on('close', () => {
-    //                         done();
-    //                     });
-    
-    //                     writer
-    //                         .pipe(writeStream);
-    //                 });
-    //         });
-
-    //         console.time('read');
-    //         readStream.pipe(parser);
-    //     });
-    // });
-
     function generateOutputBuffer(done) {
         outputBuffer = Buffer.from([]);
         dbWriter = new TDBWriter(dbParser.file);

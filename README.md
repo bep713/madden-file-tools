@@ -1,75 +1,94 @@
 # madden-file-tools
-JS API for reading and extracting Madden files.
+JS API for reading and extracting EA/Madden files.
 
 ## Usage
-    const mft = require('madden-file-tools');
-    
-    // to create a file from unknown contents
-    //     the returned object will be an instance of an inheriting class
-    //     (ex: AST, DDS, PNG, etc...)
+This package is useful for parsing the following files:
+- TDB files: used by legacy Madden, NCAA, and Head Coach games. (Can Read and write)
+- AST files: used by many games. (Note: Read only as of now)
+  - Contain other resource files such as DDS files.
 
-    const file = mft.parseUnknownFile(unknownContents);
+### EA TDB Files (Legacy Madden, NCAA 14)
+    const TDBHelper = require('madden-file-tools/helpers/TDBHelper');
+    const tdbPath = [path to file];
+
+    const helper = new TDBHelper();
+    helper.load(tdbPath)
+        .then((file) => {
+            // You have access to all the tables and records here.
+        
+            // Access individual table
+            const awplTable = file.AWPL;
+                // Alternative: file.tables[0];
+                // `tables` is just an array.
 
 
-    // to create a known file
-    //     the returned object will be of type ASTFile in this case.
+            // Access field values
+            const firstStc1Field = file.AWPL.records[0].fields['STC1'].value;
+                // Or file.AWPL.records[0].fields.STC1.value;
 
-    const ast = mft.createFile('ast', astFileContents);
+                // Alternative: file.AWPL.records[0].STC1;
+                // The alternative is nicer to use, but less performant.
 
 
-    // to extract an archive
-    //    the promise will return a list of inheriting classes
+            // Set field values
+            file.AWPL.records[0].fields['STC1'].value = 20;
 
-    mft.extractAllFromArchive(ast)
-        .then((uncompressedFiles) => {
-            console.log(uncompressedFiles[0]);
+                // Alternative: file.AWPL.records[0].STC1 = 20;
+                // Again, this way is a little slower, but is nicer to write.
+            });
+
+            // Save the file
+            helper.save([optional new file here, otherwise overwrite])
+                .then(() => {
+                    // File has been saved here.
+                });
+
+### Read HC09 Files
+The Head Coach 09 save is a little different from the others. It does not contain the DB file at the very beginning, so I've included a nice helper to load and save.
+
+    const HeadCoach09Helper = require('madden-file-tools/helpers/HeadCoach09Helper');
+    const headCoachSaveFilePath = [path to file];
+
+    const helper = new HeadCoach09Helper();
+    helper.load(headCoachSaveFilePath)
+        .then((file) => {
+            // Same TDB file API as above. You have access to all the tables here.
+
+            // Make changes here
+
+            // Save the file
+            helper.save([optional new file here, otherwise overwrite])
+                .then(() => {
+                    // File has been saved here.
+                });
         });
 
+### Generic TDB Reader/Writer Usage
+    const fs = require('fs');
+    const TDBParser = require('madden-file-tools/streams/TDBParser');
+    const TDBWriter = require('madden-file-tools/streams/TDBWriter');
 
-    // to convert a file
-    //    the promise will return an inheriting class.
-    //    in this case, it is a PNGFile.
+    const parser = new TDBParser();
+    const readStream = fs.createReadStream([file path here]);
 
-    const ddsFile = ast.archivedFiles[0].uncompressedFile;
-    mft.convertFile(ddsFile, 'png')
-        .then((pngFile) => {
-            pngFile.save('output-filepath-goes-here');
+    stream.on('end', function () {
+        const file = parser.file;
+
+        // Make changes here
+
+        // Save
+        const writeStream = fs.createWriteStream([path to write]);
+        const writer = new TDBWriter(file);
+
+        writeStream.on('end', () => {
+            // File has been saved here.
         });
 
+        writer
+            .pipe(writeStream);
+    });
+
+    stream
+        .pipe(parser);
 
 ## Documentation
-
-### Diagram
-![class diagram](https://github.com/bep713/madden-file-tools/blob/master/docs/class.png?raw=true)
-
-### Main package
-These are the set of methods you'll get when you require the module. See usage for method details.
-
-### Base classes
-You usually won't instantiate these clases. See the Implementing classes section for normal usage.
-
-#### File
-The file class is the base class of most file types. It contains attributes common to all files.
-
-Note: the parse() method is automatically called IF it is required by the inheriting files.
-
-    // instantiate a new File.
-    //     fileContents should be a Node buffer
-
-    const file = new File(fileContents, 'optional-path-to-file');
-
-
-    let fileContents = file.rawContents;
-    let filePath = file.filePath;
-    
-
-    // save a file
-    //    If no output path is passed, the filename passed above will be
-    //    used and the file will be overwritten.
-
-    file.save('optional-output-path')
-        .then(() => {
-            console.log('File saved');
-        });
-
-More coming soon!
