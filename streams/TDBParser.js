@@ -105,6 +105,7 @@ class TDBParser extends FileParser {
             case 2:
             case 6:
             case 10:
+            case 14:
                 numberOfBytesToReadNext = table.header.lengthBytes * table.header.maxRecords;
                 break;
             default:
