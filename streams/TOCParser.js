@@ -240,7 +240,6 @@ class TOCParser extends stream.Writable {
                 this._onEntryFields(parent);
             }
             else {
-                console.log(entry);
                 this._bytes(1, function (buf) {
                     this._currentBufferIndex += 1;
                     this._onEntryStart(buf, entry.parent, entry.parent._entries);
