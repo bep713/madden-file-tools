@@ -410,6 +410,14 @@ describe('TDB File unit tests', () => {
                     expect(record.PFNA).to.eql('Char');
                 });
 
+                it('string field length will be cut if entered string is larger than definition allows', () => {
+                    const record = dbParser.file[tableName].records[15];
+
+                    record.PFNA = 'CharleyOKeefe';
+                    expect(record.PFNA).to.eql('CharleyOKeef');
+                    expect(record.PLNA).to.eql('Tillman')
+                });
+
                 it('can edit a number to be smaller than original', () => {
                     const record = dbParser.file[tableName].records[15];
 

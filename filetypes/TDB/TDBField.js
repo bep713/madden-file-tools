@@ -92,12 +92,7 @@ class TDBField {
                     return char.charCodeAt(0);
                 });
 
-                const stringMaxLength = this.definition.bits/8;
-
-                for (let i = strHexArray.length; i < stringMaxLength; i++) {
-                    strHexArray.push(0);
-                }
-
+                strHexArray.length = this.definition.bits/8;
                 this._raw.set(new Uint8Array(strHexArray), this.definition.offset/8);
                 break;
             case FIELD_TYPE_BINARY:
