@@ -11,6 +11,7 @@ class HC09Helper {
 
     load(filePath) {
         const self = this;
+        this._filePath = filePath;
 
         return new Promise((resolve, reject) => {
             const stream = fs.createReadStream(filePath);
@@ -44,11 +45,11 @@ class HC09Helper {
         });
     };
 
-    get fileName() {
+    get filePath() {
         return this._filePath;
     };
 
-    set fileName(fileName) {
+    set filePath(fileName) {
         this._filePath = fileName;
     };
 
