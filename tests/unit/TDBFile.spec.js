@@ -402,6 +402,20 @@ describe('TDB File unit tests', () => {
                     expect(record.PLNA).to.equal('Tillman');
                     expect(record.PHTN).to.equal('Copperas Cove');
                 });
+
+                it('can edit string to be shorter than original', () => {
+                    const record = dbParser.file[tableName].records[15];
+
+                    record.PFNA = 'Char';
+                    expect(record.PFNA).to.eql('Char');
+                });
+
+                it('can edit a number to be smaller than original', () => {
+                    const record = dbParser.file[tableName].records[15];
+
+                    record.PSA0 = 0;
+                    expect(record.PSA0).to.eql(0);
+                });
             });
         });
     });

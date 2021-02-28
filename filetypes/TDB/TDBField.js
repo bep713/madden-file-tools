@@ -88,10 +88,17 @@ class TDBField {
     set value(value) {
         switch (this.definition.type) {
             case FIELD_TYPE_STRING:
-                const hexStr = value.split('').map((char) => {
+                let strHexArray = value.split('').map((char) => {
                     return char.charCodeAt(0);
                 });
-                this._raw.set(new Uint8Array(hexStr), this.definition.offset/8);
+
+                const stringMaxLength = this.definition.bits/8;
+
+                for (let i = strHexArray.length; i < stringMaxLength; i++) {
+                    strHexArray.push(0);
+                }
+
+                this._raw.set(new Uint8Array(strHexArray), this.definition.offset/8);
                 break;
             case FIELD_TYPE_BINARY:
                 this._raw = value;
