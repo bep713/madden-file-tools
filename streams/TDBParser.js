@@ -120,7 +120,7 @@ class TDBParser extends FileParser {
         else {
             this._onTableComplete(table);
         }
-    };da
+    };
 
     _onTableRecords(buf, table) {
         table.dataBuffer = buf;

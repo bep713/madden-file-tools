@@ -1,14 +1,123 @@
 const fs = require('fs');
+const path = require('path');
 const zlib = require('zlib');
-const TOCParser = require('../streams/TOCParser');
+const { Transform, pipeline } = require('stream');
+const ASTParser = require('../streams/ASTParser');
+const CASLegacyParser = require('../streams/CASLegacyParser');
 
-let parser = new TOCParser();
+const startingPath = 'D:\\Origin\\Madden NFL 21\\Data\\Win32\\superbundlelayout';
+const astFilePath = 'D:\\GameRips\\Madden 21\\LegacyDump3\\04_30084648.ast';
 
-const stream = fs.createReadStream('D:\\Projects\\Madden 20\\ebx\\Animation\\Football.xml')
+const astParser = new ASTParser();
+let rawAstPromises = [];
+let done = false;
 
-stream
-    .pipe(zlib.createGzip())
-    .pipe(fs.createWriteStream('Football.gz'));
+extractAST();
+checkDone();
+
+function checkDone() {
+    if (!done) {
+        setTimeout(checkDone, 100);
+    }
+}
+
+async function extractAST() {
+    const astBasePath = astFilePath.substring(0, astFilePath.lastIndexOf('\\'));
+    const astIndex = astFilePath.substring(astFilePath.lastIndexOf('\\'), astFilePath.indexOf('.'));
+    const newDir = path.join(astBasePath, astIndex);
+
+    astParser.on('compressed-file', (astData) => {
+        rawAstPromises.push(new Promise((resolve, reject) => {
+            pipeline(
+                astData.stream,
+                zlib.createInflate(),
+                fs.createWriteStream(path.join(newDir, astData.toc.index + '.dds')),
+                (err) => {
+                    if (err) { resolve(); }
+                    resolve();
+                }
+            );
+        }));
+    });
+    
+    await fs.promises.mkdir(newDir)
+
+    await new Promise((resolve, reject) => {
+        pipeline(
+            fs.createReadStream(astFilePath),
+            astParser,
+            (err) => {
+                if (err) { console.log(err); }
+                Promise.all(rawAstPromises)
+                    .then((data) => {
+                        console.log('all done');
+                        resolve();
+                    });
+            }   
+        );
+    });
+
+    done = true;
+};
+
+// fs.promises.readdir(startingPath)
+//     .then((dirs) => {
+//         const readSbDirFilesPromise = dirs.map((dir) => {
+//             return new Promise((resolve, reject) => {
+//                 resolve(fs.promises.readdir(path.join(startingPath, dir)));
+//             });
+//         })
+
+//         Promise.all(readSbDirFilesPromise)
+//             .then((sbFileArrays) => {
+//                 const readSBCasPromise = sbFileArrays.map((sbFileArray, index) => {
+//                     return new Promise((resolve, reject) => {
+//                         resolve(sbFileArray.map((file) => {
+//                             return new Promise((resolve, reject) => {
+//                                 const filePath = path.join(dirs[index], file);
+//                                 const readStream = fs.createReadStream(filePath);
+//                                 const parser = new CASLegacyParser();
+    
+//                                 parser.on('compressed-data', (data) => {
+//                                     if (data.compressionType === 0) {
+//                                         const astParser = new ASTParser();
+
+//                                         astParser.on('compressed-file', (astData) => {
+//                                             // astData.stream
+//                                             //     .pipe(zlib.)
+//                                         });
+
+//                                         data.stream
+//                                             .pipe(astParser)
+//                                     }
+//                                 });
+    
+//                                 readStream
+//                                     .pipe(parser);
+//                             });
+//                         }));
+//                     });
+//                 });
+
+//                 Promise.all(readSBCasPromise)
+//                     .then((sbCasFiles) => {
+//                         console.log(sbCasFiles);
+//                     })
+//             })
+//     });
+
+
+
+
+// const TOCParser = require('../streams/TOCParser');
+
+// let parser = new TOCParser();
+
+// const stream = fs.createReadStream('D:\\Projects\\Madden 20\\ebx\\Animation\\Football.xml')
+
+// stream
+//     .pipe(zlib.createGzip())
+//     .pipe(fs.createWriteStream('Football.gz'));
 
 // stream.on('end', () => {
     // console.log('here');
