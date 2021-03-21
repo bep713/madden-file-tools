@@ -1,7 +1,6 @@
 const Archive = require('./abstract/Archive');
 
 class ASTFile extends Archive {
-    
     constructor() {
         super();
         this[Symbol.toStringTag] = 'ASTFile';
@@ -9,11 +8,11 @@ class ASTFile extends Archive {
         this._toc = [];
     };
 
-    get toc() {
+    get tocs() {
         return this._tocs;
     };
 
-    set toc(tocs) {
+    set tocs(tocs) {
         this._tocs = tocs;
     };
 };

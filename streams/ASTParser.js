@@ -1,8 +1,9 @@
 const stream = require('stream');
 const ASTFile = require('../filetypes/ASTFile');
-const WritableParser = require('./WritableParser');
+const FileParser = require('../filetypes/abstract/FileParser');
+const ASTEntry = require('../filetypes/AST/ASTEntry');
 
-class ASTParser extends WritableParser {
+class ASTParser extends FileParser {
     constructor() {
         super();
 
@@ -10,7 +11,7 @@ class ASTParser extends WritableParser {
         this._idsToExtract = [];
         this._extract = true;
         
-        this._bytes(0x29, this.onheader);
+        this.bytes(0x30, this.onheader);
     };
 
     get extract () {
@@ -65,8 +66,8 @@ class ASTParser extends WritableParser {
             'name': 'fileSize',
             'type': 'integer'
         }, {
-            'name': 'unknown2',
-            'type': 'buffer'
+            'name': 'uncompressedSize',
+            'type': 'integer'
         }];
 
         tocSchema.forEach((val, idx) => {
@@ -79,19 +80,23 @@ class ASTParser extends WritableParser {
             };
         });
 
-        header.tableOfContentsAdditionalOffset = (buf.readInt8(40) * 4) + 1; // add 1 to individualTOCLength to skip the 01 separator
-        header.tableOfContentsStart = header.tableOfContentsOffset + header.tableOfContentsAdditionalOffset;
-        header.individualTOCLength = Object.keys(header.toc).reduce((sum, key) => {
+        header.offsetShift = buf.readInt8(33 + tocSchema.length);
+        header.tableOfContentsAdditionalOffset = (buf.readInt8(40) * 4); // add 1 to individualTOCLength to skip the 01 separator
+        header.offsetAfterToc = (8 - (header.tableOfContentsLength % 8)) % 8;
+        header.tableOfContentsStart = header.tableOfContentsOffset;
+        header.descriptionFieldLength = buf.readInt8(44);
+
+        header.individualTOCLengthBeforeDescription = Object.keys(header.toc).reduce((sum, key) => {
             return sum + header.toc[key].length;
         }, 0);
 
+        header.individualTOCLength = header.individualTOCLengthBeforeDescription + header.descriptionFieldLength;
+
         this._file.header = header;
         this.emit('header', header);
-        
-        this._currentBufferIndex = 0x29;
-        this._skipBytes((header.tableOfContentsStart - 0x29), function () {
-            this._currentBufferIndex += (header.tableOfContentsStart - 0x29);
-            this._bytes(this._file.header.tableOfContentsLength - this._file.header.tableOfContentsAdditionalOffset, this.ontoc);
+
+        this.skipBytes((header.tableOfContentsStart - 0x30 + header.tableOfContentsAdditionalOffset), function () {
+            this.bytes(this._file.header.tableOfContentsLength - header.tableOfContentsAdditionalOffset + this._file.header.offsetAfterToc, this.ontoc);
         });
     };
 
@@ -101,10 +106,11 @@ class ASTParser extends WritableParser {
         const totalLength = this._file.header.tableOfContentsLength - this._file.header.tableOfContentsAdditionalOffset;
         const individualTOCLength = this._file.header.individualTOCLength + 1;   
 
-        for (let i = 0; i <= totalLength; i += individualTOCLength) {
-            tocs.push(this.parseTocEntry(buf.slice(i, i + this._file.header.individualTOCLength), i / individualTOCLength));
+        for (let i = 0; i < totalLength; i += individualTOCLength) {
+            const toc = this.parseTocEntry(buf.slice(i+1, i + individualTOCLength), i / individualTOCLength);
+            toc.isChanged = false;
+            tocs.push(toc);
         }
-
         
         if (this._idsToExtract.length > 0) {
             tocs = tocs.filter((toc) => {
@@ -113,10 +119,10 @@ class ASTParser extends WritableParser {
         }
         
         tocs.sort((a, b) => {
-            return a.startPosition - b.startPosition;
+            return a.startPositionInt - b.startPositionInt;
         });
 
-        this._file.toc = tocs;
+        this._file.tocs = tocs;
         this.emit('toc', tocs);
 
         if (!this._extract) {
@@ -125,81 +131,59 @@ class ASTParser extends WritableParser {
             return;
         }
         
-        this._bytes(tocs[0].fileSize, function (buf) {
-            this._currentBufferIndex += (this._file.header.tableOfContentsLength - this._file.header.tableOfContentsAdditionalOffset);
+        this.bytes(tocs[0].fileSizeInt, function (buf) {
             this.onArchivedData(tocs, 0, buf);
         });
     };
 
     parseTocEntry(buf, index) {
-        let entry = {
-            'index': index
-        };
+        let entry = new ASTEntry(this._file.header.toc);
+        entry.index = index;
+        entry.offsetShift = this._file.header.offsetShift;
 
         for (let [key, value] of Object.entries(this._file.header.toc)) {
-            if (value.length === 0) {
-                entry[key] = null;
-            }
-            else {
-                switch (value.type) {
-                    case 'integer':
-                        entry[key] = buf.readUIntLE(value.offset, value.length);
-                        break;
-                    case 'buffer':
-                    default:
-                        entry[key] = buf.slice(value.offset, value.offset + value.length);
-                        break;
-                }
-            }
+            entry[key] = buf.slice(value.offset, value.offset + value.length);
         };
 
-        entry.startPosition *= 8;   // start pos needs to be *8. They likely did this to save space.
+        entry.description = buf.slice(this._file.header.individualTOCLengthBeforeDescription);
+
         return entry;
     };
 
     onArchivedData(tocs, index, buf) {
         const toc = tocs[index];
 
-        if (this._currentBufferIndex < toc.startPosition) {
-            const bytesToOffset = toc.startPosition - this._currentBufferIndex;
-            this._currentBufferIndex += bytesToOffset;
+        if (this._currentBufferIndex < (toc.startPositionInFile + toc.fileSizeInt)) {
+            const bytesToOffset = (toc.startPositionInFile + toc.fileSizeInt) - this._currentBufferIndex;
 
-            return this._bytes(bytesToOffset, function (newBuf) {
-                let bufferToPass;
-
-                if (bytesToOffset > toc.fileSize) {
-                    bufferToPass = newBuf.slice(bytesToOffset - toc.fileSize);
-                }
-                else {
-                    bufferToPass = Buffer.concat([buf.slice(bytesToOffset), newBuf]);
-                }
-
+            return this.bytes(bytesToOffset, function (newBuf) {
+                let bufferToPass = Buffer.concat([buf, newBuf]).slice(toc.fileSizeInt * -1);
                 this.onArchivedData(tocs, index, bufferToPass)
             });
         }
-
-        this._file._addArchivedFile(Buffer.from([0x78]), toc);
-
-        const fileStream = new stream.Readable();
-        fileStream._read = () => {};
-        fileStream.push(buf);
-        fileStream.push(null);
-        this.emit('compressed-file', {
-            'stream': fileStream,
-            'toc': toc
-        });
-
-        this._currentBufferIndex += toc.fileSize;
-
-        if (tocs.length === index+1) {
-            this.emit('done');
-            this._skipBytes(Infinity, function () {});
-        }
-        else {
-            this._bytes(tocs[index+1].fileSize, function (buf) {
-                this.onArchivedData(tocs, index+1, buf);
+        else {    
+            const fileStream = new stream.Readable();
+            fileStream._read = () => {};
+            fileStream.push(buf);
+            fileStream.push(null);
+            this.emit('compressed-file', {
+                'stream': fileStream,
+                'toc': toc
             });
+    
+            // this._currentBufferIndex += toc.fileSizeInt;
+    
+            if (tocs.length === index+1) {
+                this.emit('done');
+                this.skipBytes(Infinity, function () {});
+            }
+            else {
+                this.bytes(tocs[index+1].fileSizeInt, function (buf) {
+                    this.onArchivedData(tocs, index+1, buf);
+                });
+            }
         }
+
     };
 };
 

@@ -31,6 +31,11 @@ class FileTransformParser extends stream.Transform {
         this._currentBufferIndex += bytesToSkip;
         this._skipBytes(bytesToSkip, callback);
     };
+
+    passthrough(bytesToPass, callback) {
+        this._currentBufferIndex += bytesToPass;
+        this._passthrough(bytesToPass, callback);
+    };
 };
 
 module.exports = FileTransformParser;
