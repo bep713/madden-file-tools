@@ -25,7 +25,10 @@ class ASTTransformer extends FileTransformParser {
             }
 
             if (toc.isChanged) {
-                const difference = (toc.fileSizeInt - toc.originalFileSizeInt) / 8;
+                const oldPadding = getPadding(toc.originalFileSizeInt, Math.pow(2, this._file.header.offsetShift));
+                const newPadding = getPadding(toc.fileSizeInt, Math.pow(2, this._file.header.offsetShift));
+
+                const difference = (((toc.fileSizeInt + newPadding) - (toc.originalFileSizeInt + oldPadding)) / Math.pow(2, this._file.header.offsetShift));
                 runningStartPositionDifference += Math.round(difference);
             }
         });
