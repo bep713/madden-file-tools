@@ -101,9 +101,9 @@ class ASTTransformer extends FileTransformParser {
         
         if (nextIndex >= 1) {
             const previousToc = this._file.tocs[nextIndex-1];
-            calculatedPadding = (8 - (previousToc.fileSizeInt % 8)) % 8;
+            calculatedPadding = getPadding(previousToc.fileSizeInt, Math.pow(2, this._file.header.offsetShift));
             paddingToPassthrough = calculatedPadding;
-            const previousPadding = (8 - (previousToc.originalFileSizeInt % 8)) % 8;
+            const previousPadding = getPadding(previousToc.originalFileSizeInt, Math.pow(2, this._file.header.offsetShift));
             
             if (previousToc.isChanged) {
                 newPadding = calculatedPadding - previousPadding;
@@ -140,7 +140,7 @@ class ASTTransformer extends FileTransformParser {
                     if (newPadding > 0) {
                         this.push(Buffer.alloc(newPadding));
                     }
-
+                    
                     this.bytes(toc.originalFileSizeInt, function (buf) {
                         this._onArchivedData(toc, nextIndex, buf);
                     });
@@ -165,3 +165,7 @@ class ASTTransformer extends FileTransformParser {
 };
 
 module.exports = ASTTransformer;
+
+function getPadding(size, offsetShift) {
+    return (offsetShift - (size % offsetShift)) % offsetShift;
+};

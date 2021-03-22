@@ -3,7 +3,7 @@ const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
 const { expect } = require('chai');
-const { pipeline, Transform } = require('stream');
+const { pipeline, Transform, Writable } = require('stream');
 const ASTParser = require('../../streams/ASTParser');
 const ASTTransformer = require('../../streams/ASTTransformer');
 
@@ -14,11 +14,11 @@ let parser, transformer, result;
 
 describe('AST Transformer end to end tests', () => {
     describe('no changes - performance benchmark', () => {
-        const portraitASTFilePath = 'D:\\GameRips\\Madden 21\\LegacyDump3\\04_1cb0e28.ast'
+        const portraitASTFilePath = 'D:\\Media\\Games\\NFL Head Coach 09 [U] [BLUS-30128]\\PS3_GAME\\USRDIR\\qkl_fe2ig.ast'
         const portraitAST = fs.readFileSync(portraitASTFilePath);
 
         before(function (done) {
-            this.timeout(5000);
+            this.timeout(10000);
             let results = [];
             parser = new ASTParser();
 
@@ -47,6 +47,11 @@ describe('AST Transformer end to end tests', () => {
                                     cb();
                                 }
                             }),
+                            new Writable({
+                                write(chunk, enc, cb) {
+                                    cb();
+                                }
+                            }),
                             // fs.createWriteStream(path.join(__dirname, '../data/AST/portraitResult.ast')),
                             (err) => {
                                 if (err) {
@@ -65,7 +70,8 @@ describe('AST Transformer end to end tests', () => {
             )
         });
 
-        it('files are identical', () => {
+        it('files are identical', function() {
+            this.timeout(10000);
             testBufferHashes(result, portraitAST);
         });
     });

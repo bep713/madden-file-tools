@@ -82,7 +82,7 @@ class ASTParser extends FileParser {
 
         header.offsetShift = buf.readInt8(33 + tocSchema.length);
         header.tableOfContentsAdditionalOffset = (buf.readInt8(40) * 4); // add 1 to individualTOCLength to skip the 01 separator
-        header.offsetAfterToc = (8 - (header.tableOfContentsLength % 8)) % 8;
+        header.offsetAfterToc = getPadding(header.tableOfContentsLength, Math.pow(2, header.offsetShift));
         header.tableOfContentsStart = header.tableOfContentsOffset;
         header.descriptionFieldLength = buf.readInt8(44);
 
@@ -188,3 +188,7 @@ class ASTParser extends FileParser {
 };
 
 module.exports = ASTParser;
+
+function getPadding(size, offsetShift) {
+    return (offsetShift - (size % offsetShift)) % offsetShift;
+};
