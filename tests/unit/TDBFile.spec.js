@@ -5,6 +5,7 @@ const expect = require('chai').expect;
 
 const tdbPath = path.join(__dirname, '../data/HC09_TDB.db');
 const TDBParser = require('../../streams/TDBParser');
+const { pipeline } = require('stream');
 
 let dbParser;
 
@@ -425,6 +426,30 @@ describe('TDB File unit tests', () => {
                     expect(record.PSA0).to.eql(0);
                 });
             });
+        });
+    });
+
+    describe('can read huffamn tables', () => {
+        const streamedDataDbPath = path.join(__dirname, '../data/streameddata.DB');
+        let newParser = new TDBParser();
+
+        before(function (done) {
+            pipeline(
+                fs.createReadStream(streamedDataDbPath),
+                newParser,
+                (err) => {
+                    if (err) {
+                        console.error(err);
+                        done();
+                    }
+
+                    done();
+                }
+            )
+        });
+
+        it('can read the table successfully', () => {
+            // newParser.file.LCLS
         });
     });
 });

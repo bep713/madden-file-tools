@@ -1,13 +1,16 @@
 const TDBField = require('./TDBField');
 const TDBRecord = require('./TDBRecord');
 const { BitView } = require('bit-buffer');
+const TDBHuffmanField = require('./TDBHuffmanField');
 const utilService = require('../../services/utilService');
+const huffmanTreeParser = require('../../services/huffmanTreeParser');
 
 class TDBTable {
     constructor() {
         this[Symbol.toStringTag] = 'TDBTable';
 
         this._name = '';
+        this._offset = 0;
         this._header = {};
         this._fieldDefinitions = [];
         this._records = [];
@@ -22,6 +25,14 @@ class TDBTable {
 
     set name(name) {
         this._name = name;
+    };
+
+    get offset() {
+        return this._offset;
+    };
+
+    set offset(offset) {
+        this._offset = offset;
     };
 
     get header() {
@@ -76,6 +87,14 @@ class TDBTable {
 
     readRecords() {
         return new Promise((resolve, reject) => {
+            let huffmanTreeBuffer;
+            let huffmanRoot = null;
+
+            if (this.header.dataAllocationType === 66) {
+                huffmanTreeBuffer = this._dataBuffer.slice(this.header.lengthBytes * this.header.maxRecords);
+                huffmanRoot = huffmanTreeParser.parseTree(huffmanTreeBuffer);
+            }
+
             let numberOfRecordsAllocatedInFile = this.header.maxRecords;
 
             if (this.header.dataAllocationType !== 2 && this.header.dataAllocationType !== 6) {
@@ -97,10 +116,25 @@ class TDBTable {
                 recordBitArray.bigEndian = true;
 
                 for (let j = 0; j < this.fieldDefinitions.length; j++) {
-                    let field = new TDBField();
+                    let field;
+
+                    if (this.header.dataAllocationType === 66) {
+                        field = new TDBHuffmanField();
+                    }
+                    else {
+                        field = new TDBField();
+                    }
+
                     field.definition = this.fieldDefinitions[j];
                     field.raw = recordBuf;
                     field.rawBits = recordBitArray;
+
+                    if (field.definition.type === 13 || field.definition.type === 14) {
+                        const offset = field.offset;
+                        field.huffmanTreeRoot = huffmanRoot;
+                        const huffmanBufferSize = huffmanTreeBuffer.readUInt16BE(offset);
+                        field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset+2, offset+2+huffmanBufferSize);
+                    }
 
                     field.isChanged = false;
                     record.fields[field.name] = field;

@@ -45,6 +45,10 @@ class TDBParser extends FileParser {
             });
         }
 
+        definitions.sort((a, b) => {
+            return a.offset - b.offset;
+        })
+
         this.file.definitions = definitions;
         this.file.definitionBuffer = buf;
         this.tableDataStart = this.currentBufferIndex;
@@ -61,6 +65,7 @@ class TDBParser extends FileParser {
         });
 
         table.name = tableDefinition.name;
+        table.offset = tableDefinition.offset;
         table.headerBuffer = buf;
 
         table.header = {
@@ -107,6 +112,14 @@ class TDBParser extends FileParser {
             case 10:
             case 14:
                 numberOfBytesToReadNext = table.header.lengthBytes * table.header.maxRecords;
+                break;
+            case 66:
+                const currentTableDefinitionIndex = this.file.definitions.findIndex((definition) => {
+                    return definition.offset === table.offset;
+                });
+
+                const nextTableOffset = this.file.definitions[currentTableDefinitionIndex + 1].offset;
+                numberOfBytesToReadNext = (nextTableOffset + this.tableDataStart) - this.currentBufferIndex;
                 break;
             default:
                 break;

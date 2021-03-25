@@ -5,6 +5,8 @@ const FIELD_TYPE_BINARY = 1;
 const FIELD_TYPE_SINT = 2;
 const FIELD_TYPE_UINT = 3;
 const FIELD_TYPE_FLOAT = 4;
+const FIELD_TYPE_VARCHAR1 = 13;
+const FIELD_TYPE_VARCHAR2 = 14;
 
 class TDBField {
     constructor() {
@@ -77,6 +79,10 @@ class TDBField {
                 return this._raw.toString('utf8', (this.definition.offset/8), (this.definition.offset + this.definition.bits)/8).replace(/\0/g, '');
             case FIELD_TYPE_BINARY:
                 return this._raw.slice((this.definition.offset/8), (this.definition.offset + this.definition.bits)/8);
+            case FIELD_TYPE_VARCHAR1:
+            case FIELD_TYPE_VARCHAR2:
+                return this._raw.readUInt32BE(this.definition.offset/8);
+                break;
             case FIELD_TYPE_SINT:
             case FIELD_TYPE_UINT:
             case FIELD_TYPE_FLOAT:

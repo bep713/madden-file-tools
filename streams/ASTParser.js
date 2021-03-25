@@ -96,7 +96,12 @@ class ASTParser extends FileParser {
         this.emit('header', header);
 
         this.skipBytes((header.tableOfContentsStart - 0x30 + header.tableOfContentsAdditionalOffset), function () {
-            this.bytes(this._file.header.tableOfContentsLength - header.tableOfContentsAdditionalOffset + this._file.header.offsetAfterToc, this.ontoc);
+            if (this._file.header.tableOfContentsLength - header.tableOfContentsAdditionalOffset + this._file.header.offsetAfterToc === 0) {
+                this.skipBytes(Infinity);
+            }
+            else {
+                this.bytes(this._file.header.tableOfContentsLength - header.tableOfContentsAdditionalOffset + this._file.header.offsetAfterToc, this.ontoc);
+            }
         });
     };
 
