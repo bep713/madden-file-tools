@@ -7,10 +7,17 @@ class TDBHuffmanField extends TDBField {
         this._offset = null;
         this._huffmanTreeRoot = null;
         this._huffmanEncodedBuffer = null;
+        this._huffmanValueLength = 0;
     };
 
     get value() {
-        return huffmanTreeParser.decodeBufferFromRoot(this._huffmanEncodedBuffer, this._huffmanTreeRoot);  
+        return huffmanTreeParser.decodeBufferFromRoot(this._huffmanTreeRoot, this._huffmanEncodedBuffer, this._huffmanValueLength);  
+    };
+
+    set value(value) {
+        this._huffmanEncodedBuffer = huffmanTreeParser.encodeStringFromRoot(this._huffmanTreeRoot, value);
+        this._huffmanValueLength = value.length;
+        this._isChanged = true;
     };
 
     get offset() {
@@ -31,6 +38,14 @@ class TDBHuffmanField extends TDBField {
 
     set huffmanEncodedBuffer(buf) {
         this._huffmanEncodedBuffer = buf;
+    };
+
+    get huffmanValueLength() {
+        return this._huffmanValueLength;
+    };
+
+    set huffmanValueLength(length) {
+        this._huffmanValueLength = length;
     };
 };
 

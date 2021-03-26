@@ -443,13 +443,43 @@ describe('TDB File unit tests', () => {
                         done();
                     }
 
-                    done();
+                    newParser.file.LCLS.readRecords()
+                        .then(() => {
+                            done();
+                        });
                 }
             )
         });
 
         it('can read the table successfully', () => {
-            // newParser.file.LCLS
+            expect(newParser.file.LCLS.records[0].LCLT).to.eql("Dummy source text which is greater than 255 characters so that excel doesn't truncate strings on import. "
+                + "Dummy source text which is greater than 255 characters so that excel doesn't truncate strings on import. Dummy source text which is greater than 255 "
+                + "characters so that excel doesn't truncate strings on import. Dummy source text which is greater than 255 characters so that excel doesn't truncate strings "
+                + "on import. Dummy source text which is greater than 255 characters so that excel doesn't truncate strings on import. Dummy source text which is greater than "
+                + "255 characters so that excel doesn't truncate strings on import. Dummy source text which is greater than 255 characters so that excel doesn't truncate strings "
+                + "on import. Dummy source text which is greater than 255 characters so that ex");
+        });
+
+        it('parses offset correctly', () => {
+            expect(newParser.file.LCLS.records[0].fields.LCLT.offset).to.eql(0xF4);
+        });
+
+        it('reads middle string successfully', () => {
+            expect(newParser.file.LCLS.records[5].LCLT).to.eql('You will need an EA Account to play online.  By pressing submit, you acknowledge that EA will send your '
+                + 'Origin account info electronically to Electronic Arts in the U.S. to set up your EA Account.  This includes your email address and date of birth but '
+                + 'does not include credit card number or other financial account information.');
+        });
+
+        it('reads last string successfully', () => {
+            expect(newParser.file.LCLS.records[24].LCLT).to.eql('Your EA SPORTS Season Ticket was successfully purchased but there was an unexpected error updating '
+                + 'the EA server.  You will not have Season Ticketholder privileges until we resolve the problem.  Please try signing in again later.  If the problem '
+                + 'persists please contact EA Customer Support.  ');
+        });
+
+        it('can set huffman table value using existing characters', () => {
+            const newText = "Dummy source text which is greater than 255 characters so that excel doesn't truncate strings on import.";
+            newParser.file.LCLS.records[24].LCLT = newText;
+            expect(newParser.file.LCLS.records[24].LCLT).to.eql(newText)
         });
     });
 });

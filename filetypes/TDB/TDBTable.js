@@ -2,7 +2,6 @@ const TDBField = require('./TDBField');
 const TDBRecord = require('./TDBRecord');
 const { BitView } = require('bit-buffer');
 const TDBHuffmanField = require('./TDBHuffmanField');
-const utilService = require('../../services/utilService');
 const huffmanTreeParser = require('../../services/huffmanTreeParser');
 
 class TDBTable {
@@ -132,8 +131,8 @@ class TDBTable {
                     if (field.definition.type === 13 || field.definition.type === 14) {
                         const offset = field.offset;
                         field.huffmanTreeRoot = huffmanRoot;
-                        const huffmanBufferSize = huffmanTreeBuffer.readUInt16BE(offset);
-                        field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset+2, offset+2+huffmanBufferSize);
+                        field.huffmanValueLength = huffmanTreeBuffer.readUInt16BE(offset);
+                        field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset+2);
                     }
 
                     field.isChanged = false;

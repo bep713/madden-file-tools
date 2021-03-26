@@ -24,7 +24,7 @@ async function parseTDB(path) {
         .then(() => {
             helper.file.LCLS.readRecords()
                 .then(() => {
-                    console.log(helper.file.LCLS.records[0].LCLT);
+                    console.log(helper.file.LCLS.records[24].LCLT);
                 })
         });
 };
