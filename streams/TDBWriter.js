@@ -90,6 +90,18 @@ class TDBWriter extends Readable {
             }
         })
 
+        tdbFile.header.dbSize += runningOffsetAdjustmentAmount;
+        tdbFile.headerBuffer.writeUInt32BE(tdbFile.header.dbSize, 8);
+        
+        // calculate file header checksum
+        tdbFile.header.unknown2 = utilService.toUint32(~crc.crc32_be(0, this._tdbFile.headerBuffer.slice(0, 0x14), 0x14));
+        tdbFile.headerBuffer.writeUInt32BE(tdbFile.header.unknown2, 0x14);
+
+        // calculate first table header prior CRC
+        this._tdbFile.tables[0].header.priorCRC = utilService.toUint32(~crc.crc32_be(0, this._tdbFile.definitionBuffer, this._tdbFile.definitionBuffer.length));
+        this._tdbFile.tables[0].headerBuffer.writeUInt32BE(this._tdbFile.tables[0].header.priorCRC, 0);
+
+
         this.push(this._tdbFile.headerBuffer);
         this.push(this._tdbFile.definitionBuffer);
 
