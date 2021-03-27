@@ -18,6 +18,7 @@ class TDBTable {
         this._dataBuffer = null;
         this._huffmanBufferOffset = -1;
         this._huffmanTreeBuffer = null;
+        this._indexBuffer = null;
     };
 
     get name() {
@@ -92,6 +93,14 @@ class TDBTable {
 
     get huffmanTreeBuffer() {
         return this._huffmanTreeBuffer;
+    };
+
+    get indexBuffer() {
+        return this._indexBuffer;
+    };
+
+    set indexBuffer(buf) {
+        this._indexBuffer = buf;
     };
 
     readRecords() {

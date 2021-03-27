@@ -77,7 +77,11 @@ class TDBWriter extends Readable {
                 });
 
                 if (table.dataBuffer) {
-                    const size = table.headerBuffer.length + table.fieldDefinitionBuffer.length + table.dataBuffer.length;
+                    let size = table.headerBuffer.length + table.fieldDefinitionBuffer.length + table.dataBuffer.length;
+
+                    if (table.indexBuffer) {
+                        size += table.indexBuffer.length;
+                    }
                     
                     if (size !== expectedSize) {
                         runningOffsetAdjustmentAmount += size - expectedSize;
@@ -112,7 +116,11 @@ class TDBWriter extends Readable {
             if (table.dataBuffer) {
                 this.push(table.dataBuffer);
             }
-        })
+
+            if (table.indexBuffer) {
+                this.push(table.indexBuffer);
+            }
+        });
 
         this.push(this._tdbFile.eofCrcBuffer);
         this.push(null);

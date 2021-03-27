@@ -28,6 +28,7 @@
   "dependencies": {
     "bit-buffer": "^0.2.5",
     "concat-stream": "^2.0.0",
+    "crc-32": "^1.2.0",
     "dxt-js": "0.0.3",
     "leb": "^0.3.0",
     "lz4": "^0.6.5",

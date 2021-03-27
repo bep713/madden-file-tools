@@ -65,7 +65,7 @@ class TDBParser extends FileParser {
         });
 
         if(!tableDefinition) {
-            console.log(tableOffset);
+            console.warn(`Expected table at offset ${tableOffset}, but none exists in table definitions.`);
         }
 
         table.name = tableDefinition.name;
@@ -141,6 +141,19 @@ class TDBParser extends FileParser {
 
     _onTableRecords(buf, table) {
         table.dataBuffer = buf;
+
+        if (table.header.indexCount > 0) {
+            this.bytes(0x10 * table.header.indexCount, (buf) => {
+                this._onTableIndexes(buf, table);
+            });
+        }
+        else {
+            this._onTableComplete(table);
+        }
+    };
+    
+    _onTableIndexes(buf, table) {
+        table.indexBuffer = buf;
         this._onTableComplete(table);
     };
 
