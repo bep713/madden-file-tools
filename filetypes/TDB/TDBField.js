@@ -104,6 +104,10 @@ class TDBField {
             case FIELD_TYPE_BINARY:
                 this._raw = value;
                 break;
+            case FIELD_TYPE_VARCHAR1:
+            case FIELD_TYPE_VARCHAR2:
+                this._rawBits.setBits(0, value, 32);
+                break;
             case FIELD_TYPE_SINT:
             case FIELD_TYPE_UINT:
             case FIELD_TYPE_FLOAT:

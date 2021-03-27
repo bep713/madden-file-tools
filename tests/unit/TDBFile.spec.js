@@ -429,7 +429,7 @@ describe('TDB File unit tests', () => {
         });
     });
 
-    describe('can read huffamn tables', () => {
+    describe('can read huffman tables', () => {
         const streamedDataDbPath = path.join(__dirname, '../data/streameddata.DB');
         let newParser = new TDBParser();
 
@@ -445,7 +445,10 @@ describe('TDB File unit tests', () => {
 
                     newParser.file.LCLS.readRecords()
                         .then(() => {
-                            done();
+                            newParser.file.LCSS.readRecords()
+                                .then(() => {
+                                    done();
+                                });
                         });
                 }
             )
@@ -476,10 +479,30 @@ describe('TDB File unit tests', () => {
                 + 'persists please contact EA Customer Support.  ');
         });
 
+        it('reads smaller length string types successfully', () => {
+            expect(newParser.file.LCSS.records[0].LCST).to.eql('Enter the $400,000 FIFA 12 online Challenge. Sign up and play now at EASPORTSARENA.COM. 6 wins gets you a seat at the live finals in NYC!');
+        });
+
+        it('reads smaller length string types successfully - 2nd test', () => {
+            expect(newParser.file.LCSS.records[6].LCST).to.eql('Within <0> skill points');
+        });
+
         it('can set huffman table value using existing characters', () => {
             const newText = "Dummy source text which is greater than 255 characters so that excel doesn't truncate strings on import.";
             newParser.file.LCLS.records[24].LCLT = newText;
-            expect(newParser.file.LCLS.records[24].LCLT).to.eql(newText)
+            expect(newParser.file.LCLS.records[24].LCLT).to.eql(newText);
+        });
+
+        it('can set huffman table value using existing characters - for smaller field type', () => {
+            const newText = "Test12";
+            newParser.file.LCSS.records[24].LCST = newText;
+            expect(newParser.file.LCSS.records[24].LCST).to.eql(newText);
+        });
+
+        it('will automatically remove characters that do not exist in the huffman tree', () => {
+            const newText = "Air Jordan";
+            newParser.file.LCLS.records[24].LCLT = newText;
+            expect(newParser.file.LCLS.records[24].LCLT).to.eql("Air ordan");
         });
     });
 });

@@ -16,6 +16,8 @@ class TDBTable {
         this._headerBuffer = null;
         this._fieldDefinitionBuffer = null;
         this._dataBuffer = null;
+        this._huffmanBufferOffset = -1;
+        this._huffmanTreeBuffer = null;
     };
 
     get name() {
@@ -84,14 +86,24 @@ class TDBTable {
         this._fieldDefinitionBuffer = buffer;
     };
 
+    get huffmanBufferOffset() {
+        return this._huffmanBufferOffset;
+    };
+
+    get huffmanTreeBuffer() {
+        return this._huffmanTreeBuffer;
+    };
+
     readRecords() {
         return new Promise((resolve, reject) => {
             let huffmanTreeBuffer;
             let huffmanRoot = null;
 
             if (this.header.dataAllocationType === 66) {
-                huffmanTreeBuffer = this._dataBuffer.slice(this.header.lengthBytes * this.header.maxRecords);
+                this._huffmanBufferOffset = this.header.lengthBytes * this.header.maxRecords;
+                huffmanTreeBuffer = this._dataBuffer.slice(this._huffmanBufferOffset);
                 huffmanRoot = huffmanTreeParser.parseTree(huffmanTreeBuffer);
+                this._huffmanTreeBuffer = huffmanTreeBuffer;
             }
 
             let numberOfRecordsAllocatedInFile = this.header.maxRecords;
@@ -115,24 +127,38 @@ class TDBTable {
                 recordBitArray.bigEndian = true;
 
                 for (let j = 0; j < this.fieldDefinitions.length; j++) {
+                    const definition = this.fieldDefinitions[j];
+
                     let field;
 
-                    if (this.header.dataAllocationType === 66) {
+                    if (definition.type === 13 || definition.type === 14) {
                         field = new TDBHuffmanField();
                     }
                     else {
                         field = new TDBField();
                     }
 
-                    field.definition = this.fieldDefinitions[j];
+                    field.definition = definition;
                     field.raw = recordBuf;
                     field.rawBits = recordBitArray;
 
                     if (field.definition.type === 13 || field.definition.type === 14) {
                         const offset = field.offset;
                         field.huffmanTreeRoot = huffmanRoot;
-                        field.huffmanValueLength = huffmanTreeBuffer.readUInt16BE(offset);
-                        field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset+2);
+
+                        const offsetLength = field.definition.type === 13 ? 1 : 2;
+                        field.offsetLength = offsetLength;
+                        field.huffmanValueLength = huffmanTreeBuffer.readUIntBE(offset, offsetLength);
+                        field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset);
+
+                        // shorten last record's buffer
+                        if (i === 0) {
+                            this._huffmanTreeBuffer = this._huffmanTreeBuffer.slice(0, offset);
+                        }
+                        else if (i > 0) {
+                            let previousRecord = records[i-1].fields[field.definition.name];
+                            previousRecord.huffmanEncodedBuffer = previousRecord.huffmanEncodedBuffer.slice(0, (offset - previousRecord.offset));
+                        }
                     }
 
                     field.isChanged = false;

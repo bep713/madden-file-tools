@@ -72,10 +72,6 @@ huffmanTreeParser.decodeBufferFromRoot = (root, buf, valueLength) => {
     while (currentByteIndex < buf.length) {
         let currentByte = buf.readUInt8(currentByteIndex);
 
-        if (currentByte === 0) {
-            break;
-        }
-
         for (let i = 0; i <= 7; i++) {
             const currentBit = (currentByte & 0x80) >> 7;
             let nodeToLookAt;
@@ -105,10 +101,14 @@ huffmanTreeParser.decodeBufferFromRoot = (root, buf, valueLength) => {
 };
 
 huffmanTreeParser.encodeStringFromRoot = (root, value) => {
-    const stream = new BitStream(new BitView(Buffer.alloc(value.length)));
+    const stream = new BitStream(new BitView(Buffer.alloc(value.length*2)));
     stream.bigEndian = true;
 
     value.split('').filter((char) => {
+        const lookupValue = root.lookupTable[char];
+        if (!lookupValue) {
+            console.warn(`Warning: The character '${char}' is not available in the Huffman tree, so it will be removed from the string.`)
+        }
         return root.lookupTable[char];
     }).reduce((accum, cur) => {
         const lookupValue = root.lookupTable[cur];
@@ -135,9 +135,6 @@ function buildLookupTable(node, mapping, value) {
     }
 
     if (!node.left && !node.right) {
-        // const bitView = new BitView(Buffer.alloc(Math.ceil(newValue.length / 8)));
-        // bitView.setBits(0, newValue, newValue.length)
-
         mapping[String.fromCharCode(node.value)] = newValue;
     }
 };

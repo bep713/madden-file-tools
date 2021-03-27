@@ -64,6 +64,10 @@ class TDBParser extends FileParser {
             return def.offset === tableOffset;
         });
 
+        if(!tableDefinition) {
+            console.log(tableOffset);
+        }
+
         table.name = tableDefinition.name;
         table.offset = tableDefinition.offset;
         table.headerBuffer = buf;

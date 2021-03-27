@@ -22,9 +22,9 @@ async function parseTDB(path) {
     const helper = new TDBHelper();
     helper.load(path)
         .then(() => {
-            helper.file.LCLS.readRecords()
+            helper.file.LCSS.readRecords()
                 .then(() => {
-                    console.log(helper.file.LCLS.records[24].LCLT);
+                    console.log(helper.file.LCSS.records[0].LCST);
                 })
         });
 };

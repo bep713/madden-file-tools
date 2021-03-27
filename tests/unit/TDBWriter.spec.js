@@ -5,14 +5,19 @@ const expect = require('chai').expect;
 const TDBParser = require('../../streams/TDBParser');
 const TDBWriter = require('../../streams/TDBWriter');
 
-const testWritePath = '../data/HC09_WriteTest.db';
+const testWritePath = path.join(__dirname, '../data/HC09_WriteTest.db');
 const tdbPath = path.join(__dirname, '../data/HC09_TDB.db');
 const tdbFile = fs.readFileSync(tdbPath);
 const tdbFileOneChange = fs.readFileSync(path.join(__dirname, '../data/DBAfterOneChange.db'));
 const tdbFileChangeLastTable = fs.readFileSync(path.join(__dirname, '../data/ChangeLastTable.db'));
+
+const streameddataPath = path.join(__dirname, '../data/streameddata.DB');
+const streameddataDBFile = fs.readFileSync(streameddataPath);
+
 let dbParser, dbWriter, outputBuffer, bufferToCompare;
 
 const BitView = require('bit-buffer').BitView;
+const { pipeline } = require('stream');
 
 describe('TDB Writer unit tests', () => {
     before(function (done) {
@@ -74,6 +79,78 @@ describe('TDB Writer unit tests', () => {
         });
 
         testBuffers();
+    });
+
+    describe('can change huffman table fields', () => {
+        before(function (done) {
+            this.timeout(10000);
+            const stream = fs.createReadStream(streameddataPath);
+            dbParser = new TDBParser();
+    
+            stream.on('end', () => {
+                done();
+            });
+    
+            stream
+                .pipe(dbParser);
+        });
+
+        describe('no changes', () => {
+            before(function (done) {
+                this.timeout(10000);
+                bufferToCompare = streameddataDBFile;
+                generateOutputBuffer(done);
+            });
+    
+            testBuffers();
+        });
+
+        describe('changing huffman field', () => {
+            let newReadParser;
+
+            before(function (done) {
+                this.timeout(10000);
+                
+                dbParser.file.LCLS.readRecords()
+                    .then(() => {
+                        dbParser.file.LCLS.records[20].LCLT = "Testing compressed string change.";
+                        const writer = new TDBWriter(dbParser.file);
+
+                        pipeline(
+                            writer,
+                            fs.createWriteStream(testWritePath),
+                            (err) => {
+                                if (err) {
+                                    console.error(err);
+                                    done();
+                                }
+
+                                newReadParser = new TDBParser();
+
+                                pipeline(
+                                    fs.createReadStream(testWritePath),
+                                    newReadParser,
+                                    (err) => {
+                                        if (err) {
+                                            console.error(err);
+                                            done();
+                                        }
+
+                                        newReadParser.file.LCLS.readRecords()
+                                            .then(() => {
+                                                done();
+                                            });
+                                    }
+                                )
+                            }
+                        )
+                    });
+            });
+    
+            it('edit successfully wrote and file was successfully parsed again', () => {
+                expect(newReadParser.file.LCLS.records[20].LCLT).to.eql("Testing compressed string change.");
+            });
+        });
     });
 
     function generateOutputBuffer(done) {
