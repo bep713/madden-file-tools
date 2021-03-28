@@ -106,7 +106,7 @@ class TDBField {
                 break;
             case FIELD_TYPE_VARCHAR1:
             case FIELD_TYPE_VARCHAR2:
-                this._rawBits.setBits(0, value, 32);
+                this._rawBits.setBits(this.definition.offset, value, 32);
                 break;
             case FIELD_TYPE_SINT:
             case FIELD_TYPE_UINT:

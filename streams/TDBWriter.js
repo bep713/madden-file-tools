@@ -39,7 +39,7 @@ class TDBWriter extends Readable {
                     table.records.forEach((record) => {
                         Object.keys(record.fields).filter((key) => {
                             return record.fields[key] instanceof TDBHuffmanField;
-                        }).map((key) => {
+                        }).forEach((key) => {
                             const field = record.fields[key];
                             
                             if (runningOffset === 0) {
@@ -49,8 +49,10 @@ class TDBWriter extends Readable {
                                 field.offset = runningOffset;
                             }
 
-                            buffers.push(field.huffmanEncodedBuffer);
-                            runningOffset += field.huffmanEncodedBuffer.length;
+                            if (field.huffmanEncodedBuffer) {
+                                buffers.push(field.huffmanEncodedBuffer);
+                                runningOffset += field.huffmanEncodedBuffer.length;
+                            }
                         })
                     });
 

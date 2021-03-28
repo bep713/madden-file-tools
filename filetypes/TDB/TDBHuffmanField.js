@@ -11,7 +11,12 @@ class TDBHuffmanField extends TDBField {
     };
 
     get value() {
-        return huffmanTreeParser.decodeBufferFromRoot(this._huffmanTreeRoot, this._huffmanEncodedBuffer.slice(this._offsetLength), this._huffmanValueLength);  
+        if (this._huffmanEncodedBuffer) {
+            return huffmanTreeParser.decodeBufferFromRoot(this._huffmanTreeRoot, this._huffmanEncodedBuffer.slice(this._offsetLength), this._huffmanValueLength);  
+        }
+        else {
+            return '';
+        }
     };
 
     set value(value) {

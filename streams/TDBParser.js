@@ -122,8 +122,18 @@ class TDBParser extends FileParser {
                     return definition.offset === table.offset;
                 });
 
-                const nextTableOffset = this.file.definitions[currentTableDefinitionIndex + 1].offset;
-                numberOfBytesToReadNext = (nextTableOffset + this.tableDataStart) - this.currentBufferIndex;
+                let nextTableOffset;
+                
+                if (this.file.definitions.length > currentTableDefinitionIndex + 1) {
+                    nextTableOffset = this.file.definitions[currentTableDefinitionIndex + 1].offset;
+                    numberOfBytesToReadNext = (nextTableOffset + this.tableDataStart) - this.currentBufferIndex;
+                }
+                else {
+                    // the current table is the last table or only table
+                    nextTableOffset = this.file.header.dbSize - 4;
+                    numberOfBytesToReadNext = nextTableOffset - this.currentBufferIndex;
+                }
+
                 break;
             default:
                 break;

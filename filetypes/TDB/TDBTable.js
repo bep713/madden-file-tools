@@ -122,6 +122,8 @@ class TDBTable {
             }
 
             let records = [];
+            let previousHuffmanField;
+
             for (let i = 0; i < numberOfRecordsAllocatedInFile; i++) {
                 let record = new TDBRecord();
 
@@ -153,20 +155,24 @@ class TDBTable {
 
                     if (field.definition.type === 13 || field.definition.type === 14) {
                         const offset = field.offset;
-                        field.huffmanTreeRoot = huffmanRoot;
 
-                        const offsetLength = field.definition.type === 13 ? 1 : 2;
-                        field.offsetLength = offsetLength;
-                        field.huffmanValueLength = huffmanTreeBuffer.readUIntBE(offset, offsetLength);
-                        field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset);
+                        if (offset <= huffmanTreeBuffer.length) {
+                            field.huffmanTreeRoot = huffmanRoot;
+    
+                            const offsetLength = field.definition.type === 13 ? 1 : 2;
+                            field.offsetLength = offsetLength;
+                            field.huffmanValueLength = huffmanTreeBuffer.readUIntBE(offset, offsetLength);
+                            field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset);
+                            
+                            // shorten last record's buffer
+                            if (!previousHuffmanField) {
+                                this._huffmanTreeBuffer = this._huffmanTreeBuffer.slice(0, offset);
+                            }
+                            else if (previousHuffmanField.huffmanEncodedBuffer) {                                
+                                previousHuffmanField.huffmanEncodedBuffer = previousHuffmanField.huffmanEncodedBuffer.slice(0, (offset - previousHuffmanField.offset));
+                            }
 
-                        // shorten last record's buffer
-                        if (i === 0) {
-                            this._huffmanTreeBuffer = this._huffmanTreeBuffer.slice(0, offset);
-                        }
-                        else if (i > 0) {
-                            let previousRecord = records[i-1].fields[field.definition.name];
-                            previousRecord.huffmanEncodedBuffer = previousRecord.huffmanEncodedBuffer.slice(0, (offset - previousRecord.offset));
+                            previousHuffmanField = field;
                         }
                     }
 
