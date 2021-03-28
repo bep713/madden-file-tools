@@ -117,6 +117,7 @@ class TDBParser extends FileParser {
             case 14:
                 numberOfBytesToReadNext = table.header.lengthBytes * table.header.maxRecords;
                 break;
+            case 34:
             case 66:
                 const currentTableDefinitionIndex = this.file.definitions.findIndex((definition) => {
                     return definition.offset === table.offset;

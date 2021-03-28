@@ -3,6 +3,7 @@ const TDBRecord = require('./TDBRecord');
 const { BitView } = require('bit-buffer');
 const TDBHuffmanField = require('./TDBHuffmanField');
 const huffmanTreeParser = require('../../services/huffmanTreeParser');
+const TDBUncompressedField = require('./TDBUncompressedField');
 
 class TDBTable {
     constructor() {
@@ -16,8 +17,8 @@ class TDBTable {
         this._headerBuffer = null;
         this._fieldDefinitionBuffer = null;
         this._dataBuffer = null;
-        this._huffmanBufferOffset = -1;
-        this._huffmanTreeBuffer = null;
+        this._extraDataBufferOffset = -1;
+        this._extraDataBuffer = null;
         this._indexBuffer = null;
     };
 
@@ -88,11 +89,11 @@ class TDBTable {
     };
 
     get huffmanBufferOffset() {
-        return this._huffmanBufferOffset;
+        return this._extraDataBufferOffset;
     };
 
     get huffmanTreeBuffer() {
-        return this._huffmanTreeBuffer;
+        return this._extraDataBuffer;
     };
 
     get indexBuffer() {
@@ -105,14 +106,18 @@ class TDBTable {
 
     readRecords() {
         return new Promise((resolve, reject) => {
-            let huffmanTreeBuffer;
+            let extraDataBuffer;
             let huffmanRoot = null;
 
-            if (this.header.dataAllocationType === 66) {
-                this._huffmanBufferOffset = this.header.lengthBytes * this.header.maxRecords;
-                huffmanTreeBuffer = this._dataBuffer.slice(this._huffmanBufferOffset);
-                huffmanRoot = huffmanTreeParser.parseTree(huffmanTreeBuffer);
-                this._huffmanTreeBuffer = huffmanTreeBuffer;
+            if (this.header.dataAllocationType === 34 || this.header.dataAllocationType === 66) {
+                this._extraDataBufferOffset = this.header.lengthBytes * this.header.maxRecords;
+                extraDataBuffer = this._dataBuffer.slice(this._extraDataBufferOffset);
+
+                if (this.header.dataAllocationType === 66) {
+                    huffmanRoot = huffmanTreeParser.parseTree(extraDataBuffer);
+                }
+
+                this._extraDataBuffer = extraDataBuffer;
             }
 
             let numberOfRecordsAllocatedInFile = this.header.maxRecords;
@@ -122,7 +127,7 @@ class TDBTable {
             }
 
             let records = [];
-            let previousHuffmanField;
+            let previousExtraDataField;
 
             for (let i = 0; i < numberOfRecordsAllocatedInFile; i++) {
                 let record = new TDBRecord();
@@ -143,7 +148,12 @@ class TDBTable {
                     let field;
 
                     if (definition.type === 13 || definition.type === 14) {
-                        field = new TDBHuffmanField();
+                        if (this.header.dataAllocationType === 66) {
+                            field = new TDBHuffmanField();
+                        }
+                        else {
+                            field = new TDBUncompressedField();
+                        }
                     }
                     else {
                         field = new TDBField();
@@ -155,24 +165,26 @@ class TDBTable {
 
                     if (field.definition.type === 13 || field.definition.type === 14) {
                         const offset = field.offset;
+                        const offsetLength = field.definition.type === 13 ? 1 : 2;
+                        field.offsetLength = offsetLength;
 
-                        if (offset <= huffmanTreeBuffer.length) {
-                            field.huffmanTreeRoot = huffmanRoot;
+                        if (offset <= extraDataBuffer.length) {
+                            if (huffmanRoot) {
+                                field.huffmanTreeRoot = huffmanRoot;
+                            }
     
-                            const offsetLength = field.definition.type === 13 ? 1 : 2;
-                            field.offsetLength = offsetLength;
-                            field.huffmanValueLength = huffmanTreeBuffer.readUIntBE(offset, offsetLength);
-                            field.huffmanEncodedBuffer = huffmanTreeBuffer.slice(offset);
+                            field.extraDataOffset = extraDataBuffer.readUIntBE(offset, offsetLength);
+                            field.extraDataBuffer = extraDataBuffer.slice(offset);
                             
                             // shorten last record's buffer
-                            if (!previousHuffmanField) {
-                                this._huffmanTreeBuffer = this._huffmanTreeBuffer.slice(0, offset);
+                            if (!previousExtraDataField) {
+                                this._extraDataBuffer = this._extraDataBuffer.slice(0, offset);
                             }
-                            else if (previousHuffmanField.huffmanEncodedBuffer) {                                
-                                previousHuffmanField.huffmanEncodedBuffer = previousHuffmanField.huffmanEncodedBuffer.slice(0, (offset - previousHuffmanField.offset));
+                            else if (previousExtraDataField.extraDataBuffer) {                                
+                                previousExtraDataField.extraDataBuffer = previousExtraDataField.extraDataBuffer.slice(0, (offset - previousExtraDataField.offset));
                             }
 
-                            previousHuffmanField = field;
+                            previousExtraDataField = field;
                         }
                     }
 

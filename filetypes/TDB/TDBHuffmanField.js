@@ -1,18 +1,17 @@
-const TDBField = require("./TDBField");
 const huffmanTreeParser = require('../../services/huffmanTreeParser');
+const TDBExtraDataField = require("./TDBExtraDataField");
 
-class TDBHuffmanField extends TDBField {
+class TDBHuffmanField extends TDBExtraDataField {
     constructor() {
         super();
         this._huffmanTreeRoot = null;
-        this._huffmanEncodedBuffer = null;
         this._huffmanValueLength = 0;
         this._offsetLength = 0;
     };
 
     get value() {
-        if (this._huffmanEncodedBuffer) {
-            return huffmanTreeParser.decodeBufferFromRoot(this._huffmanTreeRoot, this._huffmanEncodedBuffer.slice(this._offsetLength), this._huffmanValueLength);  
+        if (this.extraDataBuffer) {
+            return huffmanTreeParser.decodeBufferFromRoot(this._huffmanTreeRoot, this.extraDataBuffer.slice(this.offsetLength), this.extraDataOffset);  
         }
         else {
             return '';
@@ -20,20 +19,12 @@ class TDBHuffmanField extends TDBField {
     };
 
     set value(value) {
-        const offsetBuffer = Buffer.alloc(this._offsetLength);
-        offsetBuffer.writeIntBE(value.length, 0, this._offsetLength);
+        const offsetBuffer = Buffer.alloc(this.offsetLength);
+        offsetBuffer.writeIntBE(value.length, 0, this.offsetLength);
 
-        this._huffmanEncodedBuffer = Buffer.concat([offsetBuffer, huffmanTreeParser.encodeStringFromRoot(this._huffmanTreeRoot, value)]);
-        this._huffmanValueLength = value.length;
+        this.extraDataBuffer = Buffer.concat([offsetBuffer, huffmanTreeParser.encodeStringFromRoot(this._huffmanTreeRoot, value)]);
+        this.extraDataOffset = value.length;
         this._isChanged = true;
-    };
-
-    get offset() {
-        return super.value;
-    };
-
-    set offset(offset) {
-        super.value = offset;
     };
 
     get huffmanTreeRoot() {
@@ -42,30 +33,6 @@ class TDBHuffmanField extends TDBField {
 
     set huffmanTreeRoot(root) {
         this._huffmanTreeRoot = root;
-    };
-
-    get huffmanEncodedBuffer() {
-        return this._huffmanEncodedBuffer;
-    };
-
-    set huffmanEncodedBuffer(buf) {
-        this._huffmanEncodedBuffer = buf;
-    };
-
-    get huffmanValueLength() {
-        return this._huffmanValueLength;
-    };
-
-    set huffmanValueLength(length) {
-        this._huffmanValueLength = length;
-    };
-
-    get offsetLength() {
-        return this._offsetLength;
-    };
-
-    set offsetLength(offsetLength) {
-        this._offsetLength = offsetLength;
     };
 };
 

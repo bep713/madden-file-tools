@@ -40,7 +40,7 @@ describe('TDB File unit tests', () => {
         });
 
         it('dbSize', () => {
-            expect(dbParser.file.header.dbSize).to.eql(4123196);
+            expect(dbParser.file.header.dbSize).to.eql(0x3EED04);
         });
 
         it('zero', () => {
@@ -48,7 +48,7 @@ describe('TDB File unit tests', () => {
         });
 
         it('numTables', () => {
-            expect(dbParser.file.header.numTables).to.eql(208);
+            expect(dbParser.file.header.numTables).to.eql(209);
         });
 
         it('unknown2', () => {
@@ -58,7 +58,7 @@ describe('TDB File unit tests', () => {
 
     describe('definitions', () => {
         it('correct definition count', () => {
-            expect(dbParser.file.definitions.length).to.equal(208);
+            expect(dbParser.file.definitions.length).to.equal(209);
         });
 
         it('AWPL', () => {
@@ -91,7 +91,7 @@ describe('TDB File unit tests', () => {
 
     describe('tables', () => {
         it('correct table count', () => {
-            expect(dbParser.file.tables.length).to.eql(208);
+            expect(dbParser.file.tables.length).to.eql(209);
         });
 
         describe('AWPL', () => {
@@ -503,6 +503,44 @@ describe('TDB File unit tests', () => {
             const newText = "Air Jordan";
             newParser.file.LCLS.records[24].LCLT = newText;
             expect(newParser.file.LCLS.records[24].LCLT).to.eql("Air ordan");
+        });
+    });
+
+    describe('can read data allocation type 34', () => {
+        const tableName = 'EARE';
+
+        before((done) => {
+            dbParser.file[tableName].readRecords()
+                .then(() => { 
+                    done(); 
+                });
+        });
+
+        it('has expected value for first record', () => {
+            expect(dbParser.file[tableName].records[0].ENDN).to.eql('Agree');
+            expect(dbParser.file[tableName].records[0].AGDE).to.eql('');
+            expect(dbParser.file[tableName].records[0].ENSN).to.eql('');
+            expect(dbParser.file[tableName].records[0].ENUV).to.eql(20);
+        });
+
+        it('has expected value for second record', () => {
+            expect(dbParser.file[tableName].records[1].ENDN).to.eql('Bench');
+            expect(dbParser.file[tableName].records[1].AGDE).to.eql('');
+            expect(dbParser.file[tableName].records[1].ENSN).to.eql('');
+            expect(dbParser.file[tableName].records[1].ENUV).to.eql(18);
+        });
+
+        it('can set value that already had one set', () => {
+            dbParser.file[tableName].records[0].ENDN = 'Disagree';
+            expect(dbParser.file[tableName].records[0].ENDN).to.eql('Disagree');
+            expect(dbParser.file[tableName].records[1].ENDN).to.eql('Bench');
+        });
+
+        it('can set value for a field that did not have a value previously', () => {
+            dbParser.file[tableName].records[0].AGDE = 'Testing123';
+            expect(dbParser.file[tableName].records[0].AGDE).to.eql('Testing123');
+            expect(dbParser.file[tableName].records[0].ENDN).to.eql('Disagree');    // because we changed it in the test above
+            expect(dbParser.file[tableName].records[1].ENDN).to.eql('Bench');
         });
     });
 });

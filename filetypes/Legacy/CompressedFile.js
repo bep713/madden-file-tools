@@ -1,5 +1,3 @@
-const LZ4 = require('lz4');
-
 class CompressedFile {
     constructor(casStartingIndex) {
         this._chunks = [];
