@@ -1,5 +1,5 @@
 const { Readable } = require('stream');
-const TDBHuffmanField = require('../filetypes/TDB/TDBHuffmanField');
+const TDBExtraDataField = require('../filetypes/TDB/TDBExtraDataField');
 const CRC = require('../services/CRC');
 const utilService = require('../services/utilService');
 
@@ -29,29 +29,41 @@ class TDBWriter extends Readable {
                     nextTable.headerBuffer.writeUInt32BE(priorCrc, 0);
                 }
 
-                if (table.header.dataAllocationType === 66) {
+                if (table.header.dataAllocationType === 34 || table.header.dataAllocationType === 66) {
                     let buffers = [];
-                    buffers.push(table.dataBuffer.slice(0, table.huffmanBufferOffset));
-                    buffers.push(table.huffmanTreeBuffer);
+                    buffers.push(table.dataBuffer.slice(0, table.extraDataBufferOffset));
+
+                    if (table.huffmanTreeBuffer) {
+                        buffers.push(table.huffmanTreeBuffer);
+                    }
                     
                     let runningOffset = 0;
 
                     table.records.forEach((record) => {
                         Object.keys(record.fields).filter((key) => {
-                            return record.fields[key] instanceof TDBHuffmanField;
+                            return record.fields[key] instanceof TDBExtraDataField;
                         }).forEach((key) => {
                             const field = record.fields[key];
+                            const fieldOriginallyHadData = field.offset !== 0xFFFFFFFF;
+                            const hasData = field.extraDataBuffer;
                             
                             if (runningOffset === 0) {
-                                runningOffset = field.offset;
+                                if (fieldOriginallyHadData) {
+                                    runningOffset = field.offset;
+                                }
+                                else {
+                                    field.offset = 0;
+                                }
                             }
                             else {
-                                field.offset = runningOffset;
+                                if (hasData) {
+                                    field.offset = runningOffset;
+                                }
                             }
 
-                            if (field.huffmanEncodedBuffer) {
-                                buffers.push(field.huffmanEncodedBuffer);
-                                runningOffset += field.huffmanEncodedBuffer.length;
+                            if (field.extraDataBuffer) {
+                                buffers.push(field.extraDataBuffer);
+                                runningOffset += field.extraDataBuffer.length;
                             }
                         })
                     });
@@ -93,8 +105,26 @@ class TDBWriter extends Readable {
             else {
                 definition.offset += runningOffsetAdjustmentAmount;
                 this._tdbFile.definitionBuffer.writeUInt32BE(definition.offset, index*8 + 4);
+
+                const expectedSize = tdbFile.header.dbSize - tdbFile.headerBuffer.length - tdbFile.definitionBuffer.length - definition.offset - 4;
+
+                const table = this._tdbFile.tables.find((table) => {
+                    return table.name === definition.name;
+                });
+
+                if (table.dataBuffer) {
+                    let size = table.headerBuffer.length + table.fieldDefinitionBuffer.length + table.dataBuffer.length;
+
+                    if (table.indexBuffer) {
+                        size += table.indexBuffer.length;
+                    }
+                    
+                    if (size !== expectedSize) {
+                        runningOffsetAdjustmentAmount += size - expectedSize;
+                    }
+                }
             }
-        })
+        });
 
         tdbFile.header.dbSize += runningOffsetAdjustmentAmount;
         tdbFile.headerBuffer.writeUInt32BE(tdbFile.header.dbSize, 8);

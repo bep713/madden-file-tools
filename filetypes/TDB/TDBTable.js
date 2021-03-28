@@ -18,7 +18,7 @@ class TDBTable {
         this._fieldDefinitionBuffer = null;
         this._dataBuffer = null;
         this._extraDataBufferOffset = -1;
-        this._extraDataBuffer = null;
+        this._huffmanTreeBuffer = null;
         this._indexBuffer = null;
     };
 
@@ -88,12 +88,12 @@ class TDBTable {
         this._fieldDefinitionBuffer = buffer;
     };
 
-    get huffmanBufferOffset() {
+    get extraDataBufferOffset() {
         return this._extraDataBufferOffset;
     };
 
     get huffmanTreeBuffer() {
-        return this._extraDataBuffer;
+        return this._huffmanTreeBuffer;
     };
 
     get indexBuffer() {
@@ -106,18 +106,17 @@ class TDBTable {
 
     readRecords() {
         return new Promise((resolve, reject) => {
-            let extraDataBuffer;
+            let extraDataBuffer = null;
             let huffmanRoot = null;
 
             if (this.header.dataAllocationType === 34 || this.header.dataAllocationType === 66) {
                 this._extraDataBufferOffset = this.header.lengthBytes * this.header.maxRecords;
                 extraDataBuffer = this._dataBuffer.slice(this._extraDataBufferOffset);
-
+                
                 if (this.header.dataAllocationType === 66) {
-                    huffmanRoot = huffmanTreeParser.parseTree(extraDataBuffer);
+                    this._huffmanTreeBuffer = extraDataBuffer;
+                    huffmanRoot = huffmanTreeParser.parseTree(this._huffmanTreeBuffer);
                 }
-
-                this._extraDataBuffer = extraDataBuffer;
             }
 
             let numberOfRecordsAllocatedInFile = this.header.maxRecords;
@@ -176,11 +175,12 @@ class TDBTable {
                             field.extraDataOffset = extraDataBuffer.readUIntBE(offset, offsetLength);
                             field.extraDataBuffer = extraDataBuffer.slice(offset);
                             
-                            // shorten last record's buffer
-                            if (!previousExtraDataField) {
-                                this._extraDataBuffer = this._extraDataBuffer.slice(0, offset);
+                            // shorten last record's buffer - if first record, shorten the huffman tree buffer
+                            // if it exists (because we cant tell where it ends)
+                            if (!previousExtraDataField && this._huffmanTreeBuffer) {
+                                this._huffmanTreeBuffer = this._huffmanTreeBuffer.slice(0, offset);
                             }
-                            else if (previousExtraDataField.extraDataBuffer) {                                
+                            else if (previousExtraDataField && previousExtraDataField.extraDataBuffer) {                                
                                 previousExtraDataField.extraDataBuffer = previousExtraDataField.extraDataBuffer.slice(0, (offset - previousExtraDataField.offset));
                             }
 

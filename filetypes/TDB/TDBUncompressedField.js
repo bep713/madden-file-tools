@@ -23,6 +23,8 @@ class TDBUncompressedField extends TDBExtraDataField {
         });
 
         this.extraDataBuffer = Buffer.concat([offsetBuffer, Buffer.from(strHexArray)]);
+        this.extraDataOffset = value.length;
+        this._isChanged = true;
     };
 };
 

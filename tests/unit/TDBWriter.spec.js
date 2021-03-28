@@ -16,7 +16,6 @@ const streameddataDBFile = fs.readFileSync(streameddataPath);
 
 let dbParser, dbWriter, outputBuffer, bufferToCompare;
 
-const BitView = require('bit-buffer').BitView;
 const { pipeline } = require('stream');
 
 describe('TDB Writer unit tests', () => {
@@ -59,7 +58,7 @@ describe('TDB Writer unit tests', () => {
         testBuffers();
     });
 
-    describe('make changes on the last table', () => {
+    describe('make changes on the second to last table', () => {
         before(function (done) {
             this.timeout(10000);
 
@@ -79,6 +78,60 @@ describe('TDB Writer unit tests', () => {
         });
 
         testBuffers();
+    });
+
+    describe('make changes on the last table (uncompressed strings)', () => {
+        let newReadParser;
+
+        before(function (done) {
+            this.timeout(10000);
+
+            dbParser.file.EARE.readRecords()
+                .then(() => {
+                    dbParser.file.EARE.records[0].fields['ENDN'].value = 'Disagree';
+                    dbParser.file.EARE.records[0].fields['AGDE'].value = 'Testing123';
+                    dbParser.file.EARE.records[20].fields['ENDN'].value = 'Anotha test';
+                    dbParser.file.EARE.records[23].fields['ENSN'].value = 'OK, last test.';
+                    
+                    const writer = new TDBWriter(dbParser.file);
+
+                    pipeline(
+                        writer,
+                        fs.createWriteStream(testWritePath),
+                        (err) => {
+                            if (err) {
+                                console.error(err);
+                                done();
+                            }
+
+                            newReadParser = new TDBParser();
+
+                            pipeline(
+                                fs.createReadStream(testWritePath),
+                                newReadParser,
+                                (err) => {
+                                    if (err) {
+                                        console.error(err);
+                                        done();
+                                    }
+
+                                    newReadParser.file.EARE.readRecords()
+                                        .then(() => {
+                                            done();
+                                        });
+                                }
+                            )
+                        }
+                    )
+                });
+        });
+
+        it('edit successfully wrote and file was successfully parsed again', () => {
+            expect(newReadParser.file.EARE.records[0].ENDN).to.eql('Disagree');
+            expect(newReadParser.file.EARE.records[0].AGDE).to.eql('Testing123');
+            expect(newReadParser.file.EARE.records[20].ENDN).to.eql('Anotha test');
+            expect(newReadParser.file.EARE.records[23].ENSN).to.eql('OK, last test.');
+        });
     });
 
     describe('can change huffman table fields', () => {
@@ -159,7 +212,7 @@ describe('TDB Writer unit tests', () => {
 
         dbWriter.on('end', () => {
             done();
-            // fs.writeFileSync(path.join(__dirname, '../data/HC09_WriteTest.db'), outputBuffer);
+            fs.writeFileSync(path.join(__dirname, '../data/HC09_WriteTest.db'), outputBuffer);
         });
         
         dbWriter.on('data', (chunk) => {
@@ -178,66 +231,80 @@ describe('TDB Writer unit tests', () => {
         });
     
         it('expected table definitions', () => {
-            compare(0x18, 0x698);
+            compare(0x18, 0x6A0);
         });
 
         it('expected EOF CRC', () => {
-            compare(0x3EEA38, 0x3EEA3C);
+            compare(0x3EED00, 0x3EED04);
         });
     
         it('expected rest of file', () => {
-            compare(0, 0x3EEA3C);
+            compare(0, 0x3EED04);
         });
     
         describe('expected first table', () => {
             it('header', () => {
-                compare(0x698, 0x6C0);
+                compare(0x6A0, 0x6C8);
             });
     
             it('field definitions', () => {
-                compare(0x6C0, 0x8A0);
+                compare(0x6C8, 0x8A8);
             });
     
             it('table data', () => {
-                compare(0x8A0, 0x10020);
+                compare(0x8A8, 0x10028);
             });
         });
     
         describe('expected second table', () => {
             it('header', () => {
-                compare(0x10020, 0x10048);
+                compare(0x10028, 0x10050);
             });
     
             it('field definitions', () => {
-                compare(0x10048, 0x10088);
+                compare(0x10050, 0x10090);
             });
 
             it('table data', () => {
-                compare(0x10088, 0x128C0);
+                compare(0x10090, 0x128C8);
             });
         });
     
         describe('expected third table', () => {
             it('header', () => {
-                compare(0x128C0, 0x128E8);
+                compare(0x128C8, 0x128F0);
             });
     
             it('field definitions', () => {
-                compare(0x128E8, 0x12908);
+                compare(0x128F0, 0x12910);
+            });
+        });
+
+        describe('expected second to last table', () => {
+            it('header', () => {
+                compare(0x3EE448, 0x3EE470);
+            });
+    
+            it('field definitions', () => {
+                compare(0x3EE470, 0x3EE4A0);
+            });
+    
+            it('table data', () => {
+                compare(0x3EE4A0, 0x3EEA40);
             });
         });
     
         describe('expected last table', () => {
             it('header', () => {
-                compare(0x3EE440, 0x3EE468);
+                compare(0x3EEA40, 0x3EEA68);
             });
     
             it('field definitions', () => {
-                compare(0x3EE468, 0x3EE498);
+                compare(0x3EEA68, 0x3EEAA8);
             });
     
             it('table data', () => {
-                compare(0x3EE498, 0x3EEA38);
+                compare(0x3EEAA8, 0x3EED00);
             });
         });
     };

@@ -52,7 +52,7 @@ describe('TDB File unit tests', () => {
         });
 
         it('unknown2', () => {
-            expect(dbParser.file.header.unknown2).to.eql(2010575941);
+            expect(dbParser.file.header.unknown2).to.eql(0x5B2A814C);
         });
     });
 
@@ -100,7 +100,7 @@ describe('TDB File unit tests', () => {
             it('header', () => {
                 const table = dbParser.file[tableName];
                 expect(table.header).to.eql({
-                    'priorCrc': 3374511333,
+                    'priorCrc': 864092347,
                     'dataAllocationType': 2,
                     'lengthBytes': 96,
                     'lengthBits': 767,
