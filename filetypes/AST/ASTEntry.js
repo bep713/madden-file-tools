@@ -15,6 +15,7 @@ class ASTEntry {
         this._description = null;
         this._descriptionString = '';
         this._isChanged = false;
+        this._isCompressed = false;
 
         this._originalId = null;
         this._originalStartPosition = null;
@@ -254,6 +255,14 @@ class ASTEntry {
 
     get descriptionString() {
         return this._description.toString().replace(/\0[\s\S]*$/g,'');
+    };
+
+    get isCompressed() {
+        return this._isCompressed;
+    };
+
+    set isCompressed(isCompressed) {
+        this._isCompressed = isCompressed;
     };
 };
 

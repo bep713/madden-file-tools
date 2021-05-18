@@ -1,7 +1,9 @@
-const stream = require('stream');
+const { Readable } = require('stream');
 const ASTFile = require('../filetypes/ASTFile');
 const FileParser = require('../filetypes/abstract/FileParser');
 const ASTEntry = require('../filetypes/AST/ASTEntry');
+
+const MAX_CHUNK_SIZE = 65536;
 
 class ASTParser extends FileParser {
     constructor() {
@@ -135,10 +137,8 @@ class ASTParser extends FileParser {
             this._skipBytes(Infinity);
             return;
         }
-        
-        this.bytes(tocs[0].fileSizeInt, function (buf) {
-            this.onArchivedData(tocs, 0, buf);
-        });
+
+        this._readData(tocs, 0);
     };
 
     parseTocEntry(buf, index) {
@@ -151,45 +151,66 @@ class ASTParser extends FileParser {
         };
 
         entry.description = buf.slice(this._file.header.individualTOCLengthBeforeDescription);
+        entry.isCompressed = entry.uncompressedSize.length > 0 || entry.uncompressedSizeInt > 0;
 
         return entry;
     };
 
-    onArchivedData(tocs, index, buf) {
+    onArchivedData(tocs, index, buf, stream) {
         const toc = tocs[index];
 
-        if (this._currentBufferIndex < (toc.startPositionInFile + toc.fileSizeInt)) {
-            const bytesToOffset = (toc.startPositionInFile + toc.fileSizeInt) - this._currentBufferIndex;
-
-            return this.bytes(bytesToOffset, function (newBuf) {
-                let bufferToPass = Buffer.concat([buf, newBuf]).slice(toc.fileSizeInt * -1);
-                this.onArchivedData(tocs, index, bufferToPass)
-            });
-        }
-        else {    
-            const fileStream = new stream.Readable();
-            fileStream._read = () => {};
-            fileStream.push(buf);
-            fileStream.push(null);
+        if (!stream) {
+            stream = new Readable();
+            stream._read = () => {};
+            stream.push(buf);
             this.emit('compressed-file', {
-                'stream': fileStream,
+                'stream': stream,
                 'toc': toc
             });
-    
-            // this._currentBufferIndex += toc.fileSizeInt;
-    
-            if (tocs.length === index+1) {
-                this.emit('done');
-                this.skipBytes(Infinity, function () {});
-            }
-            else {
-                this.bytes(tocs[index+1].fileSizeInt, function (buf) {
-                    this.onArchivedData(tocs, index+1, buf);
-                });
-            }
+        }
+        else {
+            stream.push(buf);
         }
 
+        const tocEndingPosition = toc.startPositionInFile + toc.fileSizeInt;
+        const bytesToReadUntilTocEnd = tocEndingPosition - this.currentBufferIndex;
+
+        if (bytesToReadUntilTocEnd > 0) {
+            const chunkToRead = bytesToReadUntilTocEnd > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : bytesToReadUntilTocEnd;
+            return this.bytes(chunkToRead, function (newBuf) {
+                this.onArchivedData(tocs, index, newBuf, stream);
+            });
+        }
+        else {
+            stream.push(null);
+        }
+
+        if (tocs.length === index+1) {
+            this.emit('done');
+            this.skipBytes(Infinity, function () {});
+        }
+        else {
+            this._readData(tocs, index+1);
+        }
     };
+
+    _readData(tocs, index) {
+        const toc = tocs[index];
+        const differenceToTocStart = toc.startPositionInFile - this.currentBufferIndex;
+
+        if (differenceToTocStart > 0) {
+            this.skipBytes(differenceToTocStart, function () {
+                this._readData(tocs, index);
+            });
+        }
+        else {
+            const chunkToRead = toc.fileSizeInt > MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : toc.fileSizeInt;
+
+            this.bytes(chunkToRead, function (buf) {
+                this.onArchivedData(tocs, index, buf);
+            });
+        }
+    }
 };
 
 module.exports = ASTParser;

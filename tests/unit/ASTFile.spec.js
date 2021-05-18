@@ -175,6 +175,9 @@ describe('AST File unit tests', () => {
                 expect(firstToc.startPositionInFile).to.eql(0x17C70);
                 expect(firstToc.fileSizeInt).to.eql(0x1986)
                 expect(firstToc.index).to.eql(0);
+                expect(firstToc.uncompressedSizeInt).to.eql(0x26FA);
+                expect(firstToc.uncompressedSize).to.eql(Buffer.from([0xFA, 0x26]));
+                expect(firstToc.isCompressed).to.be.true;
             });
 
             it('second toc', () => {
@@ -187,6 +190,7 @@ describe('AST File unit tests', () => {
                 expect(secondToc.startPositionInFile).to.eql(0x195F8);
                 expect(secondToc.fileSizeInt).to.eql(0x1818);
                 expect(secondToc.index).to.eql(1);
+                expect(secondToc.isCompressed).to.be.true;
             });
 
             it('empty tocs', () => {
@@ -213,6 +217,7 @@ describe('AST File unit tests', () => {
                 expect(firstToc.startPositionInFile).to.eql(0x16B8);
                 expect(firstToc.fileSizeInt).to.eql(0xD15);
                 expect(firstToc.index).to.eql(0);
+                expect(firstToc.isCompressed).to.be.true;
             });
         });
 
@@ -231,6 +236,7 @@ describe('AST File unit tests', () => {
                 expect(firstToc.startPositionInFile).to.eql(0x2828);
                 expect(firstToc.fileSizeInt).to.eql(0xACD0);
                 expect(firstToc.index).to.eql(0);
+                expect(firstToc.isCompressed).to.be.true;
             });
         });
 
@@ -251,6 +257,7 @@ describe('AST File unit tests', () => {
                 expect(firstToc.description.length).to.eql(0x2B);
                 expect(firstToc.descriptionString).to.eql('COLTS_FIELD_GRASS');
                 expect(firstToc.index).to.eql(0);
+                expect(firstToc.isCompressed).to.be.true;
             });
         });
     });

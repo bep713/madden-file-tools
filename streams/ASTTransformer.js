@@ -79,7 +79,6 @@ class ASTTransformer extends FileTransformParser {
     _onArchivedData(toc, index, buf) {
         if (!this._logIndex && (this.currentBufferIndex !== (toc.originalStartPositionInFile + toc.originalFileSizeInt))) {
             this._logIndex = true;
-            console.log(this.currentBufferIndex, (toc.originalStartPositionInFile + toc.originalFileSizeInt));
         }
 
         let dataToWrite = buf;
