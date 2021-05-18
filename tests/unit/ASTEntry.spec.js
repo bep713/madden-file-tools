@@ -136,6 +136,36 @@ describe('ASTEntry unit tests', () => {
         });
     });
 
+    describe('isCompressed', () => {
+        const buffer = Buffer.from([0x11, 0x3D]);
+
+        it('can set uncompressed size', () => {
+            entry.uncompressedSize = buffer
+            expect(entry.uncompressedSize).to.eql(buffer);
+            expect(entry.isChanged).to.be.true;
+        });
+
+        it('can get uncompressed size as an integer', () => {
+            entry.uncompressedSize = buffer;
+            expect(entry.uncompressedSizeInt).to.eql(0x3D11);
+        });
+
+        it('isCompressed sets to true if uncompressed size is greater than zero', () => {
+            entry.uncompressedSize = buffer;
+            expect(entry.isCompressed).to.be.true;
+        });
+
+        it('sets to false if uncompressed size is null', () => {
+            entry.uncompressedSize = null;
+            expect(entry.isCompressed).to.be.false;
+        });
+
+        it('sets to false if uncompressed size is zero', () => {
+            entry.uncompressedSize = Buffer.from([0x00]);
+            expect(entry.isCompressed).to.be.false;
+        });
+    });
+
     describe('data', () => {
         it('can set data to a buffer', () => {
             const buffer = Buffer.from([0x11, 0x22, 0x33]);

@@ -151,7 +151,6 @@ class ASTParser extends FileParser {
         };
 
         entry.description = buf.slice(this._file.header.individualTOCLengthBeforeDescription);
-        entry.isCompressed = entry.uncompressedSize.length > 0 || entry.uncompressedSizeInt > 0;
 
         return entry;
     };

@@ -230,7 +230,12 @@ class ASTEntry {
     };
 
     set uncompressedSize(size) {
+        if (!this.uncompressedSize) {
+            this._originalUncompressedSize = size;
+        }
+
         this._uncompressedSize = size;
+        this._isChanged = true;
     };
 
     get uncompressedSizeInt() {
@@ -258,11 +263,7 @@ class ASTEntry {
     };
 
     get isCompressed() {
-        return this._isCompressed;
-    };
-
-    set isCompressed(isCompressed) {
-        this._isCompressed = isCompressed;
+        return this._uncompressedSize ? this._uncompressedSize.length > 0 && this.uncompressedSizeInt > 0 : false;
     };
 };
 
