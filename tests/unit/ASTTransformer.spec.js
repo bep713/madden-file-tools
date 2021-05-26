@@ -11,11 +11,13 @@ let transformer, result = Buffer.from([]);
 const astFileTest = path.join(__dirname, '../data/cafe2scriptpod.AST');
 const astPadBetweenTocsPath = path.join(__dirname, '../data/AST/AST_PadBetweenTocs.ast');
 const astAdditionalOffsetAfterTocPath = path.join(__dirname, '../data/AST/AST_AdditionalOffsetAfterToc.ast');
+const astDescriptionsPath = path.join(__dirname, '../data/AST/AST_Descriptions.ast');
 const cafeAST = fs.readFileSync(astFileTest);
 
 const astPadBetweenTocs = fs.readFileSync(astPadBetweenTocsPath);
 const astAdditionalOffsetAfterToc = fs.readFileSync(astAdditionalOffsetAfterTocPath);
 const astOneChange = fs.readFileSync(path.join(__dirname, '../data/AST/AST_OneChange.ast'));
+const astDescriptions = fs.readFileSync(path.join(__dirname, '../data/AST/AST_Descriptions.ast'));
 const astAlterToc = fs.readFileSync(path.join(__dirname, '../data/AST/AST_OneChangeAlterToc.ast'));
 const astOneChangeLessPad = fs.readFileSync(path.join(__dirname, '../data/AST/AST_OneChangeLessPad.ast'));
 const astOneChangeLargerFile = fs.readFileSync(path.join(__dirname, '../data/AST/AST_OneChangeLargerFile.ast'));
@@ -231,6 +233,27 @@ describe('AST Transformer unit tests', () => {
 
         it('contains expected result', () => {
             testBufferHashes(result, astAdditionalOffsetAfterToc);
+        });
+    });
+
+    describe('transforms correctly if AST file contains descriptions', () => {
+        before((done) => {
+            parseASTFile(astDescriptionsPath)
+                .then(function (parser) {
+                    const toc1 = parser.file.tocs.find((fileTocs) => { return fileTocs.index === 0; });
+                    toc1.isChanged = true;
+
+                    const transformer = new ASTTransformer(parser.file);
+                    getTransformationResult(astDescriptionsPath, transformer, path.join(__dirname, '../data/AST/ASTDescriptionsResult.ast'))
+                        .then(function (results) {
+                            result = results;
+                            done();
+                        });
+                });
+        });
+
+        it('contains expected result', () => {
+            testBufferHashes(result, astDescriptions);
         });
     });
 });

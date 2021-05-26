@@ -48,7 +48,7 @@ class ASTTransformer extends FileTransformParser {
         const toc = this._file.tocs[this._currentTocIndex];
 
         if (toc.isChanged) {
-            const newTocBuffer = Buffer.concat([buf.slice(0, 1), toc.unknown1, toc.id, toc.startPosition, toc.fileSize, toc.uncompressedSize]);
+            const newTocBuffer = Buffer.concat([buf.slice(0, 1), toc.unknown1, toc.id, toc.startPosition, toc.fileSize, toc.uncompressedSize, toc.description]);
             this.push(newTocBuffer);
         }
         else {
