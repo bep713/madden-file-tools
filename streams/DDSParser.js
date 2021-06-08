@@ -2,14 +2,16 @@
     DDSParser was adapted from the npm module parse-dds.
     Thank you Jam3 and toji :)
 */
-const streams = require('stream');
+// const streams = require('stream');
 // const debug = require('debug')('mft');
-const Parser = require('stream-parser');
+// const Parser = require('stream-parser');
 const DDSFile = require('../filetypes/DDSFile');
-const WritableParser = require('./WritableParser');
+const FileTransformParser = require('../filetypes/abstract/FileTransformParser');
 
 const DDPF_FOURCC = 0x4;
 const DDS_MAGIC = 0x20534444;
+const P3R_MAGIC = 0x02523370;
+const P3R_MAGIC_2 = 0x01523370;
 const DDSCAPS2_CUBEMAP = 0x200;
 const DDSD_MIPMAPCOUNT = 0x20000;
 
@@ -21,18 +23,16 @@ const FOURCC_DXT3 = fourCCToInt32('DXT3');
 const FOURCC_DXT5 = fourCCToInt32('DXT5');
 const FOURCC_DX10 = fourCCToInt32('DX10');
 
-class DDSParser extends streams.Transform {
+class DDSParser extends FileTransformParser {
     constructor() {
         super();
-        Parser(this);
-
         this._file = new DDSFile();
         this._currentBufferIndex = 0;
-        this._bytes(0x94, this.onheader);
+        this.bytes(0x94, this.onheader);
     };
 
     onheader(buf) {
-        const header = {
+        let header = {
             'fourCC': 0,
             'blockBytes': 0,
             'format': '',
@@ -45,48 +45,49 @@ class DDSParser extends streams.Transform {
             'images': []
         };
 
-        const magic = buf.readUInt32LE(0);        
-        if (magic !== DDS_MAGIC) {
-            throw new Error('Invalid magic number in DDS header')
+        const magic = buf.readUInt32LE(0);
+        if (magic !== DDS_MAGIC && magic !== P3R_MAGIC && magic !== P3R_MAGIC_2) {
+            this.emit('error', 'Invalid magic number in DDS header')
         }
 
         const pfFlags = buf.readUInt32LE(80);
         if (!pfFlags & DDPF_FOURCC) {
-            throw new Error('Unsupported format, must contain a FourCC code')
+            this.emit('error', 'Unsupported format, must contain a FourCC code');
         }
 
         header.fourCC = buf.readUInt32LE(84);
+
         switch (header.fourCC) {
             case FOURCC_DXT1:
                 header.blockBytes = 8;
                 header.format = 'dxt1';
-                break
+                break;
             case FOURCC_DXT3:
                 header.blockBytes = 16;
                 header.format = 'dxt3';
-                break
+                break;
             case FOURCC_DXT5:
                 header.blockBytes = 16;
                 header.format = 'dxt5';
-                break
-            case FOURCC_FP32F:
-                header.format = 'rgba32f';
                 break;
-            case FOURCC_DX10:
-                const dx10Header = new Uint32Array(buf.slice(128, 128 + 20));
-                header.format = dx10Header[0];
-                var resourceDimension = dx10Header[1];
-                var miscFlag = dx10Header[2];
-                var arraySize = dx10Header[3];
-                var miscFlags2 = dx10Header[4];
+        //     case FOURCC_FP32F:
+        //         header.format = 'rgba32f';
+        //         break;
+        //     case FOURCC_DX10:
+        //         // const dx10Header = new Uint32Array(buf.slice(128, 128 + 20));
+        //         // header.format = dx10Header[0];
+        //         // var resourceDimension = dx10Header[1];
+        //         // var miscFlag = dx10Header[2];
+        //         // var arraySize = dx10Header[3];
+        //         // var miscFlags2 = dx10Header[4];
             
-                if (resourceDimension === D3D10_RESOURCE_DIMENSION_TEXTURE2D && format === DXGI_FORMAT_R32G32B32A32_FLOAT) {
-                    header.format = 'rgba32f'
-                } else {
-                    throw new Error('Unsupported DX10 texture format ' + format)
-                }
+        //         // if (resourceDimension === D3D10_RESOURCE_DIMENSION_TEXTURE2D && format === DXGI_FORMAT_R32G32B32A32_FLOAT) {
+        //         //     header.format = 'rgba32f'
+        //         // } else {
+        //         //     // throw new Error('Unsupported DX10 texture format ' + format)
+        //         // }
             default:
-              throw new Error('Unsupported FourCC code: ' + int32ToFourCC(fourCC))
+            //   throw new Error('Unsupported FourCC code: ' + int32ToFourCC(header.fourCC))
         }
 
         header.flags = buf.readUInt32LE(8);
@@ -117,7 +118,7 @@ class DDSParser extends streams.Transform {
         if (header.cubemap) {
             for (var f = 0; f < 6; f++) {
                 if (header.format !== 'rgba32f') {
-                    throw new Error('Only RGBA32f cubemaps are supported');
+                    this.emit('error', 'Only RGBA32f cubemaps are supported');
                 }
 
                 var bpp = 4 * 32 / 8;
