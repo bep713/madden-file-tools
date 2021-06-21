@@ -87,7 +87,7 @@ class ASTEntry {
     };
 
     get startPositionInFile() {
-        return this.startPositionInt << this._offsetShift;
+        return lshift(this.startPositionInt, this._offsetShift);
     };
 
     set startPosition(startPosition) {
@@ -202,7 +202,7 @@ class ASTEntry {
     };
 
     get originalStartPositionInFile() {
-        return this._originalStartPosition.readUIntLE(0, this._startPosition.length) << this._offsetShift;
+        return lshift(this._originalStartPosition.readUIntLE(0, this._startPosition.length), this._offsetShift);
     };
 
     get originalFileSize() {
@@ -265,6 +265,11 @@ class ASTEntry {
     get isCompressed() {
         return this._uncompressedSize ? this._uncompressedSize.length > 0 && this.uncompressedSizeInt > 0 : false;
     };
+
 };
 
 module.exports = ASTEntry;
+
+function lshift(num, bits) {
+    return num * Math.pow(2, bits);
+};

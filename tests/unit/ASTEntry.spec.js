@@ -108,7 +108,14 @@ describe('ASTEntry unit tests', () => {
         it('can get start position in file', () => {
             entry.startPosition = buffer;
             entry.offsetShift = 8;
-            expect(entry.startPositionInFile).to.eql(0x4E61B8 << 8)
+            expect(entry.startPositionInFile.toString()).to.eql((0x4E61B8 << 8).toString())
+            expect(entry.isChanged).to.be.true;
+        });
+
+        it('can output a very large number for the start position in file', () => {
+            entry.startPosition = Buffer.from([0x00, 0x00, 0x80]);
+            entry.offsetShift = 8;
+            expect(entry.startPositionInFile.toString()).to.eql((2147483648).toString())
             expect(entry.isChanged).to.be.true;
         });
     });
