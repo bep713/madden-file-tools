@@ -101,7 +101,8 @@ class TDBParser extends FileParser {
                 'type': buf.readUInt32BE(i*0x10),
                 'offset': buf.readUInt32BE((i*0x10) + 4),
                 'name': reverseString(buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12)),
-                'bits': buf.readUInt32BE((i*0x10) + 12)
+                'bits': buf.readUInt32BE((i*0x10) + 12),
+                'maxValue': Math.pow(2, buf.readUInt32BE(i*0x10 + 12)) - 1
             });
         }
 

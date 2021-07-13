@@ -130,6 +130,7 @@ describe('TDB File unit tests', () => {
                     expect(field.offset).to.equal(0);
                     expect(field.name).to.equal('STC1');
                     expect(field.bits).to.equal(32);
+                    expect(field.maxValue).to.equal(4294967295);
                 });
 
                 it('CGID', () => {
@@ -139,7 +140,7 @@ describe('TDB File unit tests', () => {
                     expect(field.type).to.equal(3);
                     expect(field.offset).to.equal(708);
                     expect(field.name).to.equal('CGID');
-                    expect(field.bits).to.equal(2);
+                    expect(field.maxValue).to.equal(3);
                 });
             });
 
