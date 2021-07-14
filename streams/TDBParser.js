@@ -107,13 +107,23 @@ class TDBParser extends FileParser {
         const fieldDefinitions = [];
 
         for (let i = 0; i < table.header.numFields; i++) {
-            fieldDefinitions.push({
+            let definition = {
                 'type': buf.readUInt32BE(i*0x10),
                 'offset': buf.readUInt32BE((i*0x10) + 4),
                 'name': reverseString(buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12)),
                 'bits': buf.readUInt32BE((i*0x10) + 12),
-                'maxValue': Math.pow(2, buf.readUInt32BE(i*0x10 + 12)) - 1
-            });
+            };
+
+            if (definition.type === 0) {
+                // string
+                definition.maxLength = definition.bits / 8;
+                definition.maxValue = definition.maxLength;
+            }
+            else {
+                definition.maxValue = Math.pow(2, definition.bits) -1;
+            }
+
+            fieldDefinitions.push(definition);
         }
 
         table.fieldDefinitions = fieldDefinitions;

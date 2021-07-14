@@ -22,7 +22,6 @@ describe('TDB Helper unit tests', () => {
         });
 
         it('definition buffers are equal', () => {
-            console.log(tdbFile.definitionBuffer.length);
             testBufferHashes(tdbFile.definitionBuffer, file.slice(0x18, 0x6A0));
         });
 

@@ -395,6 +395,17 @@ describe('TDB File unit tests', () => {
                     expect(records.length).to.equal(2585);
                 });
 
+                it('correct definitions', () => {
+                    const table = dbParser.file[tableName];
+                    const field = table.fieldDefinitions[27];
+
+                    expect(field.type).to.equal(0);
+                    expect(field.offset).to.equal(144);
+                    expect(field.name).to.equal('PLNA');
+                    expect(field.bits).to.equal(112);
+                    expect(field.maxLength).to.equal(14);
+                });
+
                 it('parses Charles Tillman', () => {
                     const record = dbParser.file[tableName].records[15];
 
