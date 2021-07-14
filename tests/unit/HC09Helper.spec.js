@@ -7,7 +7,7 @@ const hc09FilePath = path.join(__dirname, '../data/HC09USRDATA');
 const testWritePath = path.join(__dirname, '../data/HC09_WriteTest.db');
 
 describe('HC09 Helper unit tests', () => {
-    describe('can read in a file', async () => {
+    describe('can read in a file', () => {
         let file, helper, tdbFile;
 
         before(async () => {

@@ -6,7 +6,7 @@ const TDBHelper = require('../../helpers/TDBHelper');
 const hc09FilePath = path.join(__dirname, '../data/HC09_TDB.db');
 const testWritePath = path.join(__dirname, '../data/HC09_WriteTest.db');
 
-describe('HC09 Helper unit tests', () => {
+describe('TDB Helper unit tests', () => {
     describe('can read in a file', async () => {
         let file, helper, tdbFile;
 
@@ -22,7 +22,8 @@ describe('HC09 Helper unit tests', () => {
         });
 
         it('definition buffers are equal', () => {
-            testBufferHashes(tdbFile.definitionBuffer, file.slice(0x18, 0x698));
+            console.log(tdbFile.definitionBuffer.length);
+            testBufferHashes(tdbFile.definitionBuffer, file.slice(0x18, 0x6A0));
         });
 
         // it('table buffers are equal', () => {

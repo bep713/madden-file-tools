@@ -7,6 +7,7 @@ const TDBWriter = require('../../streams/TDBWriter');
 
 const testWritePath = path.join(__dirname, '../data/HC09_WriteTest.db');
 const tdbPath = path.join(__dirname, '../data/HC09_TDB.db');
+const tdb2Path = path.join(__dirname, '../data/ncaa-test.db');
 const tdbFile = fs.readFileSync(tdbPath);
 const tdbFileOneChange = fs.readFileSync(path.join(__dirname, '../data/DBAfterOneChange.db'));
 const tdbFileChangeLastTable = fs.readFileSync(path.join(__dirname, '../data/ChangeLastTable.db'));
@@ -131,6 +132,68 @@ describe('TDB Writer unit tests', () => {
             expect(newReadParser.file.EARE.records[0].AGDE).to.eql('Testing123');
             expect(newReadParser.file.EARE.records[20].ENDN).to.eql('Anotha test');
             expect(newReadParser.file.EARE.records[23].ENSN).to.eql('OK, last test.');
+        });
+    });
+
+    describe('make changes to table with 1 record', () => {
+        let newReadParser, dbParser2;
+
+        before(function (done) {
+            this.timeout(10000);
+
+            const stream = fs.createReadStream(tdb2Path);
+            dbParser2 = new TDBParser();
+
+            stream.on('end', () => {
+                readRecords(done);
+            });
+
+            stream
+                .pipe(dbParser2);
+
+            function readRecords(done) {
+                dbParser2.file.SEAI.readRecords()
+                    .then(() => {
+                        dbParser2.file.SEAI.records[0].fields['SEWN'].value = 21;
+                        dbParser2.file.SEAI.records[0].fields['SEWT'].value = 7;
+                        
+                        const writer = new TDBWriter(dbParser2.file);
+    
+                        pipeline(
+                            writer,
+                            fs.createWriteStream(testWritePath),
+                            (err) => {
+                                if (err) {
+                                    console.error(err);
+                                    done();
+                                }
+    
+                                newReadParser = new TDBParser();
+    
+                                pipeline(
+                                    fs.createReadStream(testWritePath),
+                                    newReadParser,
+                                    (err) => {
+                                        if (err) {
+                                            console.error(err);
+                                            done();
+                                        }
+    
+                                        newReadParser.file.SEAI.readRecords()
+                                            .then(() => {
+                                                done();
+                                            });
+                                    }
+                                )
+                            }
+                        )
+                    });
+            }
+        });
+
+        it('edit successfully wrote and file was successfully parsed again', () => {
+            expect(newReadParser.file.SEAI.records[0].SEWN).to.eql(21);
+            expect(newReadParser.file.SEAI.records[0].SEWT).to.eql(7);
         });
     });
 

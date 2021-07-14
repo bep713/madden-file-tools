@@ -31,13 +31,23 @@ class TDBParser extends FileParser {
 
     _onDefinitions(buf) {
         let definitions = [];
+        let unknownTableCount = 0;
 
         for (let i = 0; i < this.file.header.numTables; i++) {
             const nameIndex = i*8;
             const offsetIndex = (i*8)+4;
 
-            const nameBackwards = buf.toString('utf8', nameIndex, offsetIndex);
-            const name = reverseString(nameBackwards);
+            const nameRaw = buf.readUInt32BE(nameIndex);
+            let name;
+            
+            if (nameRaw >= 65536) {
+                const nameBackwards = buf.toString('utf8', nameIndex, offsetIndex);
+                name = reverseString(nameBackwards);
+            }
+            else {
+                name = `Unk${unknownTableCount}`;
+                unknownTableCount += 1;
+            }
 
             definitions.push({
                 'name': name,
@@ -47,7 +57,7 @@ class TDBParser extends FileParser {
 
         definitions.sort((a, b) => {
             return a.offset - b.offset;
-        })
+        });
 
         this.file.definitions = definitions;
         this.file.definitionBuffer = buf;
