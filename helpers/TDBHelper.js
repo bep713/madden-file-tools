@@ -2,7 +2,7 @@ const fs = require('fs');
 const TDBParser = require('../streams/TDBParser');
 const TDBWriter = require('../streams/TDBWriter');
 
-class HC09Helper {
+class TDBHelper {
     constructor() {
         this._filePath = null;
         this._file = null;
@@ -58,4 +58,4 @@ class HC09Helper {
     };
 };
 
-module.exports = HC09Helper;
+module.exports = TDBHelper;
