@@ -79,6 +79,19 @@ describe('TDB Helper unit tests', () => {
 
             testBufferHashes(original, compare);
         });
+
+        it('can write to new file path', async () => {
+            const original = fs.readFileSync(testWritePath);
+
+            const newHelper = new TDBHelper();
+            const file = await newHelper.load(testWritePath);
+            const newPath = path.join(__dirname, '../data/TDBHelperWriteTest.db');
+            await newHelper.save(newPath);
+
+            const compare = fs.readFileSync(newPath);
+
+            testBufferHashes(original, compare);
+        });
     });
 });
 

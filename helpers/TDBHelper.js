@@ -1,4 +1,5 @@
 const fs = require('fs');
+const pipeline = require('stream').pipeline;
 const TDBParser = require('../streams/TDBParser');
 const TDBWriter = require('../streams/TDBWriter');
 
@@ -32,16 +33,36 @@ class TDBHelper {
 
         return new Promise((resolve, reject) => {
             const saveDestination = outputFile ? outputFile : this._filePath;
-    
-            const stream = fs.createWriteStream(saveDestination, { flags: 'r+', start: self._dataStart });
-            const writer = new TDBWriter(this._file);
 
-            stream.on('close', () => {
-                resolve();
+            const cloneFilePromise = new Promise((resolve, reject) => {
+                if (outputFile) {
+                    pipeline(
+                        fs.createReadStream(this._filePath),
+                        fs.createWriteStream(outputFile),
+                        (err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve();
+                        }
+                    )
+                }
+                else {
+                    resolve();
+                }
             });
+
+            cloneFilePromise.then(() => {
+                const stream = fs.createWriteStream(saveDestination, { flags: 'r+', start: self._dataStart });
+                const writer = new TDBWriter(this._file);
     
-            writer
-                .pipe(stream);
+                stream.on('close', () => {
+                    resolve();
+                });
+        
+                writer
+                    .pipe(stream);
+            });
         });
     };
 

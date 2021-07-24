@@ -1,5 +1,6 @@
 const fs = require('fs');
 const CRC32 = require('crc-32');
+const pipeline = require('stream').pipeline;
 const TDBParser = require('../streams/TDBParser');
 const TDBWriter = require('../streams/TDBWriter');
 const utilService = require('../services/utilService');
@@ -63,35 +64,56 @@ class NCAAB10Helper {
 
         return new Promise((resolve, reject) => {
             const saveDestination = outputFile ? outputFile : this._filePath;
+
+            const cloneFilePromise = new Promise((resolve, reject) => {
+                if (outputFile) {
+                    pipeline(
+                        fs.createReadStream(this._filePath),
+                        fs.createWriteStream(outputFile),
+                        (err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            resolve();
+                        }
+                    )
+                }
+                else {
+                    resolve();
+                }
+            });
+
+            cloneFilePromise.then(() => {
     
-            const stream = fs.createWriteStream(saveDestination, { flags: 'r+', start: self._dataStart });
-            const writer = new TDBWriter(this._file);
+                const stream = fs.createWriteStream(saveDestination, { flags: 'r+', start: self._dataStart });
+                const writer = new TDBWriter(this._file);
 
-            stream.on('close', () => {
-                // update beginning CRC
-                fs.readFile(saveDestination, (err, buf) => {
-                    if (err) {
-                        const errorMessage = 'Error reading file at ' + saveDestination;
-                        console.error(errorMessage);
-                        reject(errorMessage);
-                    }
-
-                    const checksum = utilService.toUint32(CRC32.buf(buf.slice(0x1C)));
-                    buf.writeUInt32BE(checksum, 0x10);
-                    fs.writeFile(saveDestination, buf, (err) => {
+                stream.on('close', () => {
+                    // update beginning CRC
+                    fs.readFile(saveDestination, (err, buf) => {
                         if (err) {
-                            const errorMessage = 'Error writing file at ' + saveDestination;
+                            const errorMessage = 'Error reading file at ' + saveDestination;
                             console.error(errorMessage);
                             reject(errorMessage);
                         }
 
-                        resolve();
-                    })
+                        const checksum = utilService.toUint32(CRC32.buf(buf.slice(0x1C)));
+                        buf.writeUInt32BE(checksum, 0x10);
+                        fs.writeFile(saveDestination, buf, (err) => {
+                            if (err) {
+                                const errorMessage = 'Error writing file at ' + saveDestination;
+                                console.error(errorMessage);
+                                reject(errorMessage);
+                            }
+
+                            resolve();
+                        })
+                    });
                 });
+        
+                writer
+                    .pipe(stream);
             });
-    
-            writer
-                .pipe(stream);
         });
     };
 

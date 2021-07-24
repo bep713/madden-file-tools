@@ -79,6 +79,19 @@ describe('HC09 Helper unit tests', () => {
 
             testBufferHashes(original, compare);
         });
+
+        it('can write to new file path', async () => {
+            const original = fs.readFileSync(testWritePath);
+
+            const newHelper = new HC09Helper();
+            const file = await newHelper.load(testWritePath);
+            const newPath = path.join(__dirname, '../data/HC09HelperWriteTest.db');
+            await newHelper.save(newPath);
+
+            const compare = fs.readFileSync(newPath);
+
+            testBufferHashes(original, compare);
+        });
     });
 });
 
