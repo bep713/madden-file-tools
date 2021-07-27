@@ -22,6 +22,14 @@ class TDBRecord {
         this._isPopulated = isPopulated;
     };
 
+    get index() {
+        return this._index;
+    };
+
+    set index(index) {
+        this._index = index;
+    };
+
     get recordBuffer() {
         return this._recordBuffer;
     };

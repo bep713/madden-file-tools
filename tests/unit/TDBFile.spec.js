@@ -190,6 +190,9 @@ describe('TDB File unit tests', () => {
                     expect(record.SEWN).to.equal(0);
                     expect(record.PAas).to.equal(0);
                     expect(record.PAat).to.equal(0);
+
+                    expect(record.index).to.equal(0);
+                    expect(record.isPopulated).to.be.true;
                 });
 
                 describe('edit records', () => {
@@ -207,6 +210,9 @@ describe('TDB File unit tests', () => {
                         console.timeEnd('set integer');
 
                         expect(record.STC2).to.equal(25);
+
+                        expect(record.index).to.equal(0);
+                        expect(record.isPopulated).to.be.true;
                     });
 
                     it('can edit integers - method #2', () => {
@@ -373,6 +379,9 @@ describe('TDB File unit tests', () => {
                     expect(record.cpat).to.equal(727);
                     expect(record.cppt).to.equal(185);
                     expect(record.cpny).to.equal(2878);
+
+                    expect(record.index).to.equal(4);
+                    expect(record.isPopulated).to.be.true;
                 });
             });
         });
@@ -414,6 +423,9 @@ describe('TDB File unit tests', () => {
                     expect(record.PFNA).to.equal('Charles');
                     expect(record.PLNA).to.equal('Tillman');
                     expect(record.PHTN).to.equal('Copperas Cove');
+
+                    expect(record.index).to.equal(15);
+                    expect(record.isPopulated).to.be.true;
                 });
 
                 it('can edit string to be shorter than original', () => {

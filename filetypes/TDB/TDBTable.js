@@ -130,6 +130,7 @@ class TDBTable {
 
             for (let i = 0; i < numberOfRecordsAllocatedInFile; i++) {
                 let record = new TDBRecord();
+                record.index = i;
 
                 if ((i+1) > this.header.currentRecords) {
                     record.isPopulated = false;
