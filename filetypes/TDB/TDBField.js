@@ -78,7 +78,7 @@ class TDBField {
             case FIELD_TYPE_STRING:
                 return this._raw.toString('utf8', (this.definition.offset/8), (this.definition.offset + this.definition.bits)/8).replace(/\0/g, '');
             case FIELD_TYPE_BINARY:
-                return this._raw.slice((this.definition.offset/8), (this.definition.offset + this.definition.bits)/8);
+                return '0x' + this._raw.slice((this.definition.offset/8), (this.definition.offset + this.definition.bits)/8).toString('hex');
             case FIELD_TYPE_VARCHAR1:
             case FIELD_TYPE_VARCHAR2:
                 return this._raw.readUInt32BE(this.definition.offset/8);
@@ -102,7 +102,8 @@ class TDBField {
                 this._raw.set(new Uint8Array(strHexArray), this.definition.offset/8);
                 break;
             case FIELD_TYPE_BINARY:
-                this._raw = value;
+                // const fieldValue = Buffer.from(, 'hex');
+                this._raw.write(value.substring(2), (this.definition.offset/8), (this.definition.offset + this.definition.bits)/8, 'hex');
                 break;
             case FIELD_TYPE_VARCHAR1:
             case FIELD_TYPE_VARCHAR2:

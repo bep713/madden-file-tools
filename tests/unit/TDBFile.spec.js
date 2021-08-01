@@ -451,6 +451,44 @@ describe('TDB File unit tests', () => {
                 });
             });
         });
+
+        describe('TEAM', () => {
+            const tableName = 'TEAM';
+
+            describe('records', () => {
+                before((done) => {
+                    dbParser.file[tableName].readRecords()
+                        .then(() => {
+                            done(); 
+                        });
+                });
+                
+                it('correct record count', () => {
+                    const records = dbParser.file[tableName].records;
+                    expect(records.length).to.equal(38);
+                });
+
+                it('parses binary field (JJNM)', () => {
+                    const jjnm = dbParser.file[tableName].records[0].fields['JJNM'].value;
+                    expect(jjnm).to.equal('0x1063edffff1ff19fbf5feefd0f');
+                });
+
+                it('can edit binary field (JJNM)', () => {
+                    const newValue = '0xff63edffff1ff19fbf5feefdff';
+                    dbParser.file[tableName].records[0].fields['JJNM'].value = newValue;
+                    
+                    const jjnm = dbParser.file[tableName].records[0].fields['JJNM'].value;
+                    expect(jjnm).to.equal(newValue);
+                });
+
+                it('can set an integer field as string', () => {
+                    dbParser.file[tableName].records[0].fields['SID1'].value = '44';
+
+                    const sid1 = dbParser.file[tableName].records[0].fields['SID1'].value;
+                    expect(sid1).to.equal(44);
+                });
+            });
+        });
     });
 
     describe('can read huffman tables', () => {
