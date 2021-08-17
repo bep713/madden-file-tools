@@ -2,8 +2,11 @@ const TDBField = require('./TDBField');
 const TDBRecord = require('./TDBRecord');
 const { BitView } = require('bit-buffer');
 const TDBHuffmanField = require('./TDBHuffmanField');
-const huffmanTreeParser = require('../../services/huffmanTreeParser');
 const TDBUncompressedField = require('./TDBUncompressedField');
+const huffmanTreeParser = require('../../services/huffmanTreeParser');
+
+const BIG_ENDIAN = 1;
+const LITTLE_ENDIAN = 0;
 
 class TDBTable {
     constructor() {
@@ -12,14 +15,15 @@ class TDBTable {
         this._name = '';
         this._offset = 0;
         this._header = {};
-        this._fieldDefinitions = [];
         this._records = [];
-        this._headerBuffer = null;
-        this._fieldDefinitionBuffer = null;
+        this._endian = 0;
         this._dataBuffer = null;
-        this._extraDataBufferOffset = -1;
-        this._huffmanTreeBuffer = null;
         this._indexBuffer = null;
+        this._headerBuffer = null;
+        this._fieldDefinitions = [];
+        this._huffmanTreeBuffer = null;
+        this._extraDataBufferOffset = -1;
+        this._fieldDefinitionBuffer = null;
     };
 
     get name() {
@@ -104,6 +108,14 @@ class TDBTable {
         this._indexBuffer = buf;
     };
 
+    get endian() {
+        return this._endian;
+    };
+
+    set endian(endian) {
+        this._endian = endian;
+    };
+
     readRecords() {
         return new Promise((resolve, reject) => {
             let extraDataBuffer = null;
@@ -140,7 +152,10 @@ class TDBTable {
                 record.recordBuffer = recordBuf;
 
                 const recordBitArray = new BitView(recordBuf, recordBuf.byteOffset);
-                recordBitArray.bigEndian = true;
+
+                if (this._endian === BIG_ENDIAN) {
+                    recordBitArray.bigEndian = true;
+                }
 
                 for (let j = 0; j < this.fieldDefinitions.length; j++) {
                     const definition = this.fieldDefinitions[j];

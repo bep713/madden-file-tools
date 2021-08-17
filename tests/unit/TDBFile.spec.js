@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const { pipeline } = require('stream');
 const concat = require('concat-stream');
 const expect = require('chai').expect;
+const TDBParser = require('../../streams/TDBParser');
 
 const tdbPath = path.join(__dirname, '../data/HC09_TDB.db');
-const TDBParser = require('../../streams/TDBParser');
-const { pipeline } = require('stream');
+const littleEndianDbPath = path.join(__dirname, '../data/TDB_LittleEndian.db');
 
 let dbParser;
 
@@ -34,9 +35,17 @@ describe('TDB File unit tests', () => {
         it('version', () => {
             expect(dbParser.file.header.version).to.eql(8);
         });
+
+        it('endian', () => {
+            expect(dbParser.file.header.endian).to.eql(1);
+        });
         
         it('unknown1', () => {
-            expect(dbParser.file.header.unknown1).to.eql(16777216);
+            expect(dbParser.file.header.unknown1).to.eql(0);
+        });
+
+        it('unknown2', () => {
+            expect(dbParser.file.header.unknown2).to.eql(0);
         });
 
         it('dbSize', () => {
@@ -51,8 +60,8 @@ describe('TDB File unit tests', () => {
             expect(dbParser.file.header.numTables).to.eql(209);
         });
 
-        it('unknown2', () => {
-            expect(dbParser.file.header.unknown2).to.eql(0x5B2A814C);
+        it('unknown3', () => {
+            expect(dbParser.file.header.unknown3).to.eql(0x5B2A814C);
         });
     });
 
@@ -603,6 +612,239 @@ describe('TDB File unit tests', () => {
             expect(dbParser.file[tableName].records[0].AGDE).to.eql('Testing123');
             expect(dbParser.file[tableName].records[0].ENDN).to.eql('Disagree');    // because we changed it in the test above
             expect(dbParser.file[tableName].records[1].ENDN).to.eql('Bench');
+        });
+    });
+
+    describe('can read little endian DB files', () => {
+        before(function(done) {
+            this.timeout(10000);
+            console.time('parse');
+            dbParser = new TDBParser();
+    
+            const stream = fs.createReadStream(littleEndianDbPath);
+    
+            stream.on('end', () => {
+                console.timeEnd('parse');
+                done();
+            });
+    
+            stream
+                .pipe(dbParser);
+        });
+
+        describe('header', () => {
+            it('dbUnknown', () => {
+                expect(dbParser.file.header.digit).to.eql(17474);
+            });
+            
+            it('version', () => {
+                expect(dbParser.file.header.version).to.eql(8);
+            });
+            
+            it('endian', () => {
+                expect(dbParser.file.header.endian).to.eql(0);
+            });
+
+            it('unknown1', () => {
+                expect(dbParser.file.header.unknown1).to.eql(0);
+            });
+
+            it('unknown2', () => {
+                expect(dbParser.file.header.unknown1).to.eql(0);
+            });
+    
+            it('dbSize', () => {
+                expect(dbParser.file.header.dbSize).to.eql(1593228);
+            });
+    
+            it('zero', () => {
+                expect(dbParser.file.header.zero).to.eql(0);
+            });
+    
+            it('numTables', () => {
+                expect(dbParser.file.header.numTables).to.eql(6);
+            });
+    
+            it('unknown2', () => {
+                expect(dbParser.file.header.unknown3).to.eql(0x11C591FA);
+            });
+        });
+
+        describe('definitions', () => {
+            it('correct definition count', () => {
+                expect(dbParser.file.definitions.length).to.equal(6);
+            });
+    
+            it('DCHT', () => {
+                expect(dbParser.file.definitions[0]).to.eql({
+                    'name': 'DCHT',
+                    'offset': 0
+                });
+            });
+    
+            it('INJY', () => {
+                expect(dbParser.file.definitions[1]).to.eql({
+                    'name': 'INJY',
+                    'offset': 29544
+                });
+            });
+    
+            it('PLAY', () => {
+                expect(dbParser.file.definitions[4]).to.eql({
+                    'name': 'PLAY',
+                    'offset': 538304
+                });
+            });
+        });
+
+        describe('EOF CRC', () => {
+            it('expected EOF CRC', () => {
+                expect(dbParser.file.eofCrcBuffer).to.eql(Buffer.from([0x1A, 0x86, 0x15, 0x4F]));
+            });
+        });
+
+        describe('tables', () => {
+            it('correct table count', () => {
+                expect(dbParser.file.tables.length).to.eql(6);
+            });
+    
+            describe('DCHT', () => {
+                const tableName = 'DCHT';
+    
+                it('header', () => {
+                    const table = dbParser.file[tableName];
+                    expect(table.header).to.eql({
+                        'priorCrc': 1299273868,
+                        'dataAllocationType': 2,
+                        'lengthBytes': 8,
+                        'lengthBits': 63,
+                        'zero': 0,
+                        'maxRecords': 3680,
+                        'currentRecords': 3020,
+                        'unknown2': 4294901760,
+                        'numFields': 4,
+                        'indexCount': 0,
+                        'zero2': 0,
+                        'zero3': 0,
+                        'headerCrc': 3903397829
+                    });
+                });
+    
+                describe('field definitions', () => {
+                    it('correct field length', () => {
+                        const table = dbParser.file[tableName];
+                        expect(table.fieldDefinitions.length).to.equal(4);
+                    });
+    
+                    it('PGID', () => {
+                        const table = dbParser.file[tableName];
+                        const field = table.fieldDefinitions[0];
+    
+                        expect(field.type).to.equal(3);
+                        expect(field.offset).to.equal(0);
+                        expect(field.name).to.equal('PGID');
+                        expect(field.bits).to.equal(15);
+                        expect(field.maxValue).to.equal(32767);
+                    });
+    
+                    it('PPOS', () => {
+                        const table = dbParser.file[tableName];
+                        const field = table.fieldDefinitions[2];
+    
+                        expect(field.type).to.equal(3);
+                        expect(field.offset).to.equal(25);
+                        expect(field.name).to.equal('PPOS');
+                        expect(field.bits).to.equal(6);
+                        expect(field.maxValue).to.equal(63);
+                    });
+                });
+    
+                describe('records', () => {
+                    before((done) => {
+                        dbParser.file[tableName].readRecords()
+                            .then(() => { 
+                                done(); 
+                            });
+                    });
+    
+                    it('correct number of records', () => {
+                        const table = dbParser.file[tableName];
+                        expect(table.records.length).to.equal(3020);
+                    });
+    
+                    it('parses first record correctly', () => {
+                        const record = dbParser.file[tableName].records[0];
+    
+                        expect(record.PGID).to.equal(12552);
+                        expect(record.TGID).to.equal(1);
+                        expect(record.PPOS).to.equal(0);
+                        expect(record.ddep).to.equal(0);
+    
+                        expect(record.index).to.equal(0);
+                        expect(record.isPopulated).to.be.true;
+                    });
+    
+                    describe('edit records', () => {
+                        it('can edit integers', () => {
+                            const record = dbParser.file[tableName].records[0];
+                            record.PGID = 9876;
+                            expect(record.PGID).to.equal(9876);
+    
+                            console.time('get integer');
+                            record.fields['PGID'].value;
+                            console.timeEnd('get integer');
+    
+                            console.time('set integer');
+                            record.fields['PGID'].value = 25;
+                            console.timeEnd('set integer');
+    
+                            expect(record.PGID).to.equal(25);
+    
+                            expect(record.index).to.equal(0);
+                            expect(record.isPopulated).to.be.true;
+                        });
+    
+                        it('can edit integers - method #2', () => {
+                            const record = dbParser.file[tableName].records[0];
+                            record.fields['PGID'].value = 20;
+                            expect(record.PGID).to.equal(20);
+                        });
+                    });
+                });
+            });
+
+            describe('TEAM', () => {
+                const tableName = 'TEAM';
+
+                before((done) => {
+                    dbParser.file[tableName].readRecords()
+                        .then(() => { 
+                            done(); 
+                        });
+                });
+
+                it('correct number of records', () => {
+                    const table = dbParser.file[tableName];
+                    expect(table.records.length).to.equal(33);
+                });
+
+                it('parses middle record correctly', () => {
+                    const record = dbParser.file[tableName].records[24];
+
+                    expect(record.TDNA).to.equal('Ravens');
+                    expect(record.TLNA).to.equal('Baltimore');
+                    expect(record.TGID).to.equal(25);
+
+                    expect(record.index).to.equal(24);
+                    expect(record.isPopulated).to.be.true;
+                });
+
+                it('can edit strings', () => {
+                    const record = dbParser.file[tableName].records[24];
+                    record.fields['TDNA'].value = 'OldBrowns';
+                    expect(record.TDNA).to.equal('OldBrowns');
+                });
+            });
         });
     });
 });

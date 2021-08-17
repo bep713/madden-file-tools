@@ -5,23 +5,55 @@ const utilService = require('../services/utilService');
 const TDBRecord = require('../filetypes/TDB/TDBRecord');
 const FileParser = require('../filetypes/abstract/FileParser');
 
+const LITTLE_ENDIAN = 0;
+const BIG_ENDIAN = 1;
+
 class TDBParser extends FileParser {
     constructor() {
         super();
         this.file = new TDBFile();
+
+        this._readUInt8 = (offset, buf) => {
+            return buf.readUInt8(offset);
+        };
+
+        this._readUInt16 = null;
+        this._readUInt32 = null;
         this.bytes(0x18, this._onHeader);
     };
 
     _onHeader(buf) {
-        const header = {
+        let header = {
             'digit': buf.readUInt16BE(0),
             'version': buf.readUInt16BE(2),
-            'unknown1': buf.readUInt32BE(4),
-            'dbSize': buf.readUInt32BE(8),
-            'zero': buf.readUInt32BE(12),
-            'numTables': buf.readUInt32BE(16),
-            'unknown2': buf.readUInt32BE(20)
+            'endian': buf.readUInt8(4), 
         }
+
+        if (header.endian === LITTLE_ENDIAN) {
+            this._readUInt16 = (offset, buf) => {
+                return buf.readUInt16LE(offset);
+            }
+            
+            this._readUInt32 = (offset, buf) => {
+                return buf.readUInt32LE(offset);
+            }
+        }
+        else {
+            this._readUInt16 = (offset, buf) => {
+                return buf.readUInt16BE(offset);
+            }
+            
+            this._readUInt32 = (offset, buf) => {
+                return buf.readUInt32BE(offset);
+            }
+        }
+
+        header['unknown1'] = this._readUInt8(5, buf),
+        header['unknown2'] = this._readUInt16(6, buf),
+        header['dbSize'] = this._readUInt32(8, buf),
+        header['zero'] = this._readUInt32(12, buf),
+        header['numTables'] = this._readUInt32(16, buf),
+        header['unknown3'] = this._readUInt32(20, buf)
 
         this.file.header = header;
         this.file.headerBuffer = buf;
@@ -37,12 +69,17 @@ class TDBParser extends FileParser {
             const nameIndex = i*8;
             const offsetIndex = (i*8)+4;
 
-            const nameRaw = buf.readUInt32BE(nameIndex);
+            const nameRaw = this._readUInt32(nameIndex, buf);
             let name;
             
             if (nameRaw >= 65536) {
-                const nameBackwards = buf.toString('utf8', nameIndex, offsetIndex);
-                name = reverseString(nameBackwards);
+                if (this.file.header.endian === BIG_ENDIAN) {
+                    const nameBackwards = buf.toString('utf8', nameIndex, offsetIndex);
+                    name = reverseString(nameBackwards);
+                }
+                else {
+                    name = buf.toString('utf8', nameIndex, offsetIndex);
+                }
             }
             else {
                 name = `Unk${unknownTableCount}`;
@@ -51,7 +88,7 @@ class TDBParser extends FileParser {
 
             definitions.push({
                 'name': name,
-                'offset': buf.readUInt32BE(offsetIndex),
+                'offset': this._readUInt32(offsetIndex, buf),
             });
         }
 
@@ -68,6 +105,7 @@ class TDBParser extends FileParser {
 
     _onTableHeader(buf) {
         const table = new TDBTable();
+        table.endian = this.file.header.endian;
 
         const tableOffset = this.currentBufferIndex - (this.tableDataStart + 0x28);
         const tableDefinition = this.file.definitions.find((def) => {
@@ -83,19 +121,19 @@ class TDBParser extends FileParser {
         table.headerBuffer = buf;
 
         table.header = {
-            'priorCrc': buf.readUInt32BE(0),
-            'dataAllocationType': buf.readUInt32BE(4),
-            'lengthBytes': buf.readUInt32BE(8),
-            'lengthBits': buf.readUInt32BE(12),
-            'zero': buf.readUInt32BE(16),
-            'maxRecords': buf.readUInt16BE(20),
-            'currentRecords': buf.readUInt16BE(22),
-            'unknown2': buf.readUInt32BE(24),
+            'priorCrc': this._readUInt32(0, buf),
+            'dataAllocationType': this._readUInt32(4, buf),
+            'lengthBytes': this._readUInt32(8, buf),
+            'lengthBits': this._readUInt32(12, buf),
+            'zero': this._readUInt32(16, buf),
+            'maxRecords': this._readUInt16(20, buf),
+            'currentRecords': this._readUInt16(22, buf),
+            'unknown2': this._readUInt32(24, buf),
             'numFields': buf.readUInt8(28),
             'indexCount': buf.readUInt8(29),
-            'zero2': buf.readUInt16BE(30),
-            'zero3': buf.readUInt32BE(32),
-            'headerCrc': buf.readUInt32BE(36)
+            'zero2': this._readUInt16(30, buf),
+            'zero3': this._readUInt32(32, buf),
+            'headerCrc': this._readUInt32(36, buf)
         };
 
         this.bytes(table.header.numFields * 0x10, (buf) => {
@@ -108,10 +146,10 @@ class TDBParser extends FileParser {
 
         for (let i = 0; i < table.header.numFields; i++) {
             let definition = {
-                'type': buf.readUInt32BE(i*0x10),
-                'offset': buf.readUInt32BE((i*0x10) + 4),
-                'name': reverseString(buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12)),
-                'bits': buf.readUInt32BE((i*0x10) + 12),
+                'type': this._readUInt32(i*0x10, buf),
+                'offset': this._readUInt32((i*0x10) + 4, buf),
+                'name': this.file.header.endian === BIG_ENDIAN ? reverseString(buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12)) : buf.toString('utf8', (i*0x10) + 8, (i*0x10) + 12),
+                'bits': this._readUInt32((i*0x10) + 12, buf),
             };
 
             if (definition.type === 0) {

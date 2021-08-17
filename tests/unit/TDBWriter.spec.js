@@ -5,10 +5,13 @@ const expect = require('chai').expect;
 const TDBParser = require('../../streams/TDBParser');
 const TDBWriter = require('../../streams/TDBWriter');
 
-const testWritePath = path.join(__dirname, '../data/HC09_WriteTest.db');
 const tdbPath = path.join(__dirname, '../data/HC09_TDB.db');
 const tdb2Path = path.join(__dirname, '../data/ncaa-test.db');
+const testWritePath = path.join(__dirname, '../data/HC09_WriteTest.db');
+const tdbLittleEndianPath = path.join(__dirname, '../data/TDB_LittleEndian.db');
+
 const tdbFile = fs.readFileSync(tdbPath);
+const tdbLittleEndian = fs.readFileSync(tdbLittleEndianPath);
 const tdbFileOneChange = fs.readFileSync(path.join(__dirname, '../data/DBAfterOneChange.db'));
 const tdbFileChangeLastTable = fs.readFileSync(path.join(__dirname, '../data/ChangeLastTable.db'));
 
@@ -46,7 +49,6 @@ describe('TDB Writer unit tests', () => {
     describe('single change', () => {
         before(function (done) {
             this.timeout(10000);
-
             bufferToCompare = tdbFileOneChange;
 
             dbParser.file.AWPL.readRecords()
@@ -194,6 +196,71 @@ describe('TDB Writer unit tests', () => {
         it('edit successfully wrote and file was successfully parsed again', () => {
             expect(newReadParser.file.SEAI.records[0].SEWN).to.eql(21);
             expect(newReadParser.file.SEAI.records[0].SEWT).to.eql(7);
+        });
+    });
+
+    describe('no changes to file (little endian)', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            const stream = fs.createReadStream(tdbLittleEndianPath);
+            dbParser = new TDBParser();
+    
+            stream.on('end', () => {
+                bufferToCompare = tdbLittleEndian;
+                generateOutputBuffer(done);
+            });
+    
+            stream
+                .pipe(dbParser);
+
+        });
+
+        testBuffers();
+    });
+
+    describe('single change to file (little endian)', () => {
+        let newParser;
+
+        before(function (done) {
+            dbParser.file.PLAY.readRecords()
+                .then(() => {
+                    dbParser.file.PLAY.records[0].fields['PLNA'].value = 'Test1234';
+                    const writer = new TDBWriter(dbParser.file);
+    
+                    pipeline(
+                        writer,
+                        fs.createWriteStream(testWritePath),
+                        (err) => {
+                            if (err) {
+                                console.error(err);
+                                done();
+                            }
+
+                            newParser = new TDBParser();
+        
+                            pipeline(
+                                fs.createReadStream(testWritePath),
+                                newParser,
+                                (err) => {
+                                    if (err) {
+                                        console.error(err);
+                                        done();
+                                    }
+        
+                                    newParser.file.PLAY.readRecords()
+                                        .then(() => {
+                                            done();
+                                        });
+                                }
+                            )
+                        }
+                    );
+                });
+        });
+
+        it('change persists', () => {
+            expect(newParser.file.PLAY.records[0].PLNA).to.equal('Test1234');
         });
     });
 

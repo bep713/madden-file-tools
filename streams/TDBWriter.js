@@ -1,12 +1,25 @@
 const { Readable } = require('stream');
-const TDBExtraDataField = require('../filetypes/TDB/TDBExtraDataField');
 const CRC = require('../services/CRC');
 const utilService = require('../services/utilService');
+const TDBExtraDataField = require('../filetypes/TDB/TDBExtraDataField');
+
+const BIG_ENDIAN = 1;
+const LITTLE_ENDIAN = 0;
 
 class TDBWriter extends Readable {
     constructor(tdbFile) {
         super();
         this._tdbFile = tdbFile;
+        this._endian = tdbFile.header.endian;
+
+        this._writeUInt32 = (data, offset, buf) => {
+            if (this._endian === LITTLE_ENDIAN) {
+                buf.writeUInt32LE(data, offset)
+            }
+            else {
+                buf.writeUInt32BE(data, offset);
+            }
+        };
 
         let crc = new CRC();
 
@@ -22,11 +35,11 @@ class TDBWriter extends Readable {
                 const isLastTable = index === this._tdbFile.tables.length-1;
 
                 if (isLastTable) {
-                    this._tdbFile.eofCrcBuffer.writeUInt32BE(priorCrc, 0);
+                    this._writeUInt32(priorCrc, 0, this._tdbFile.eofCrcBuffer);
                 }
                 else {
                     const nextTable = this._tdbFile.tables[index+1];
-                    nextTable.headerBuffer.writeUInt32BE(priorCrc, 0);
+                    this._writeUInt32(priorCrc, 0, nextTable.headerBuffer);
                 }
 
                 if (table.header.dataAllocationType === 34 || table.header.dataAllocationType === 66) {
@@ -84,7 +97,7 @@ class TDBWriter extends Readable {
 
                 definition.offset += runningOffsetAdjustmentAmount;
 
-                this._tdbFile.definitionBuffer.writeUInt32BE(definition.offset, index*8 + 4);
+                this._writeUInt32(definition.offset, index*8 + 4, this._tdbFile.definitionBuffer);
 
                 const table = this._tdbFile.tables.find((table) => {
                     return table.name === definition.name;
@@ -104,7 +117,7 @@ class TDBWriter extends Readable {
             }
             else {
                 definition.offset += runningOffsetAdjustmentAmount;
-                this._tdbFile.definitionBuffer.writeUInt32BE(definition.offset, index*8 + 4);
+                this._writeUInt32(definition.offset, index*8 + 4, this._tdbFile.definitionBuffer);
 
                 const expectedSize = tdbFile.header.dbSize - tdbFile.headerBuffer.length - tdbFile.definitionBuffer.length - definition.offset - 4;
 
@@ -127,15 +140,15 @@ class TDBWriter extends Readable {
         });
 
         tdbFile.header.dbSize += runningOffsetAdjustmentAmount;
-        tdbFile.headerBuffer.writeUInt32BE(tdbFile.header.dbSize, 8);
+        this._writeUInt32(tdbFile.header.dbSize, 8, tdbFile.headerBuffer);
         
         // calculate file header checksum
         tdbFile.header.unknown2 = utilService.toUint32(~crc.crc32_be(0, this._tdbFile.headerBuffer.slice(0, 0x14), 0x14));
-        tdbFile.headerBuffer.writeUInt32BE(tdbFile.header.unknown2, 0x14);
+        this._writeUInt32(tdbFile.header.unknown2, 0x14, tdbFile.headerBuffer);
 
         // calculate first table header prior CRC
         this._tdbFile.tables[0].header.priorCRC = utilService.toUint32(~crc.crc32_be(0, this._tdbFile.definitionBuffer, this._tdbFile.definitionBuffer.length));
-        this._tdbFile.tables[0].headerBuffer.writeUInt32BE(this._tdbFile.tables[0].header.priorCRC, 0);
+        this._writeUInt32(this._tdbFile.tables[0].header.priorCRC, 0, this._tdbFile.tables[0].headerBuffer);
 
 
         this.push(this._tdbFile.headerBuffer);
