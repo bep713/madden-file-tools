@@ -1,4 +1,5 @@
 const sjcl = require('./sjcl/sjcl');
+const { BitView } = require('bit-buffer');
 
 let utilService = {};
 
@@ -223,6 +224,82 @@ utilService.hex2Dec = function (data, le) {
     }
 
     return utilService.toUint32(number);
+  }
+};
+
+utilService.getUncompressedTextFromSixBitCompression = function (data) {
+  const bv = new BitView(data, data.byteOffset);
+  bv.bigEndian = true;
+  const numCharacters = (data.length * 8) / 6;
+  
+  let text = '';
+
+  for (let i = 0; i < numCharacters; i++) {
+    text += String.fromCharCode(getCharCode(i * 6));
+  }
+
+  return text;
+
+  function getCharCode(offset) {
+    return bv.getBits(offset, 6) + 32;
+  };
+};
+
+utilService.readModifiedLebCompressedInteger = function (buf) {
+  let value = 0;
+
+  for (let i = (buf.length - 1); i >= 0; i--) {
+      let currentByte = buf.readUInt8(i);
+
+      if (i !== (buf.length - 1)) {
+          currentByte = currentByte ^ 0x80;
+      }
+
+      let multiplicationFactor = 1 << (i * 6);
+
+      if (i > 1) {
+          multiplicationFactor = multiplicationFactor << 1;
+      }
+
+      value += currentByte * multiplicationFactor;
+  }
+
+  return value;
+};
+
+utilService.writeModifiedLebCompressedInteger = function (value) {
+  if (value <= 63) {
+    return Buffer.from([value]);
+  }
+  else if (value > 63 && value <= 8192) {
+    const buffer = Buffer.from([0x0, 0x0]);
+    const bv = new BitView(buffer, buffer.byteOffset);
+
+    const lowerBitValue = value % 64;
+    bv.setBits(0, lowerBitValue, 6);
+    bv.setBits(7, 1, 1);
+    
+    const higherBitValue = Math.floor(value / 64);
+    bv.setBits(8, higherBitValue, 8);
+
+    return buffer;
+  }
+  else {
+    const buffer = Buffer.from([0x0, 0x0, 0x0]);
+    const bv = new BitView(buffer, buffer.byteOffset);
+
+    const lowerBitValue = value % 64;
+    bv.setBits(0, lowerBitValue, 6);
+    bv.setBits(7, 1, 1);
+    
+    const midBitValue = Math.floor((value - 8192) / 64);
+    bv.setBits(8, midBitValue, 7);
+    bv.setBits(15, 1, 1);
+
+    const highBitValue = Math.floor(value / 8192);
+    bv.setBits(16, highBitValue, 8);
+
+    return buffer;
   }
 };
 
