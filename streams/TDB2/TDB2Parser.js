@@ -34,6 +34,7 @@ class TDB2Parser extends FileParser {
 
     _onTableRecordStart(table) {
         let record = new TDB2Record();
+        record.index = table.records.length;
         this._onTableFieldStart(record, table);
     };
 

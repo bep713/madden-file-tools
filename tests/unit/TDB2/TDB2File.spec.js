@@ -100,6 +100,10 @@ describe('TDBv2 File unit tests', () => {
             it('TGID', () => {
                 expect(dbParser.file.tables[0].records[1].fields['TGID'].value).to.equal(1);
             });
+
+            it('index', () => {
+                expect(dbParser.file.tables[0].records[1].index).to.equal(1);
+            });
         });
 
         describe('random record', () => {
@@ -118,6 +122,10 @@ describe('TDBv2 File unit tests', () => {
             it('TGID', () => {
                 expect(dbParser.file.tables[0].records[1580].fields['TGID'].value).to.equal(16);
             });
+
+            it('index', () => {
+                expect(dbParser.file.tables[0].records[1580].index).to.equal(1580);
+            });
         });
 
         describe('last record', () => {
@@ -135,6 +143,10 @@ describe('TDBv2 File unit tests', () => {
 
             it('TGID', () => {
                 expect(dbParser.file.tables[0].records[3172].fields['TGID'].value).to.equal(32);
+            });
+
+            it('index', () => {
+                expect(dbParser.file.tables[0].records[3172].index).to.equal(3172);
             });
         });
     });
@@ -203,6 +215,7 @@ describe('TDBv2 File unit tests', () => {
             expect(record.BSBA).to.be.closeTo(0.548, 0.1);
             expect(record.PEPS).to.equal('SmithGeno_112');
             expect(record.PGHE).to.equal(201);
+            expect(record.index).to.equal(0);
         });
 
         it('reads negative values as expected', () => {
@@ -227,6 +240,7 @@ describe('TDBv2 File unit tests', () => {
             expect(record.TDAN).to.equal('teamdb_Bears');
             expect(record.TROL).to.equal(72);
             expect(dbParser.file.TEAM.records[0].fields['TROL'].isChanged).to.equal(false);
+            expect(record.index).to.equal(0);
         });
     });
 
