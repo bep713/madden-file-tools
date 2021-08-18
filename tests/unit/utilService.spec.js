@@ -28,6 +28,21 @@ describe('util service unit tests', () => {
             const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0x87, 0xA3, 0x01]));
             expect(value).to.equal(10439);
         });
+
+        it('returns expected value (negative)', () => {
+            const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0x5F]));
+            expect(value).to.equal(-31);
+        });
+
+        it('returns expected value (negative, two digits)', () => {
+            const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0xC0, 0x01]));
+            expect(value).to.equal(-64);
+        });
+
+        it('returns expected value (negative, three digits)', () => {
+            const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0xC7, 0xA3, 0x01]));
+            expect(value).to.equal(-10439);
+        });
     });
 
     describe('can write an LEB modified compressed integer', () => {
@@ -54,6 +69,21 @@ describe('util service unit tests', () => {
         it('returns expected value (three digits)', () => {
             const value = utilService.writeModifiedLebCompressedInteger(10439);
             expect(value).to.eql(Buffer.from([0x87, 0xA3, 0x01]));
+        });
+
+        it('returns expected value (negative)', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(-31);
+            expect(value).to.eql(Buffer.from([0x5F]));
+        });
+
+        it('returns expected value (negative, two digits)', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(-64);
+            expect(value).to.eql(Buffer.from([0xC0, 0x01]));
+        });
+
+        it('returns expected value (negative, three digits)', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(-10439);
+            expect(value).to.eql(Buffer.from([0xC7, 0xA3, 0x01]));
         });
     });
 });

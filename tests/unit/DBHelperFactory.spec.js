@@ -5,8 +5,11 @@ const expect = require('chai').expect;
 const TDBHelper = require('../../helpers/TDBHelper');
 const HC09Helper = require('../../helpers/HC09Helper');
 const DBHelperFactory = require('../../helpers/DBHelperFactory');
+const MaddenRosterHelper = require('../../helpers/MaddenRosterHelper');
+
 const hc09FilePath = path.join(__dirname, '../data/HC09_TDB.db');
 const testWritePath = path.join(__dirname, '../data/HC09USRDATA');
+const testRosterPath = path.join(__dirname, '../data/M22_Roster-Official');
 
 describe('DB Helper Factory unit tests', () => {
     describe('can read in a file', async () => {
@@ -18,6 +21,11 @@ describe('DB Helper Factory unit tests', () => {
         it('returns a HC09Helper if the file is a normal DB file', async () => {
             let helper = await DBHelperFactory.createHelper(testWritePath);
             expect(helper).to.be.an.instanceof(HC09Helper);
+        });
+
+        it('returns a MaddenRosterHelper if the file is a Madden roster', async () => {
+            let helper = await DBHelperFactory.createHelper(testRosterPath);
+            expect(helper).to.be.an.instanceof(MaddenRosterHelper);
         });
 
         it('can read records after using the factory', async () => {

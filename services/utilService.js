@@ -247,36 +247,61 @@ utilService.getUncompressedTextFromSixBitCompression = function (data) {
 
 utilService.readModifiedLebCompressedInteger = function (buf) {
   let value = 0;
+  let isNegative = false;
 
   for (let i = (buf.length - 1); i >= 0; i--) {
-      let currentByte = buf.readUInt8(i);
+    let currentByte = buf.readUInt8(i);
 
-      if (i !== (buf.length - 1)) {
-          currentByte = currentByte ^ 0x80;
-      }
+    if (i !== (buf.length - 1)) {
+      currentByte = currentByte ^ 0x80;
+    }
 
-      let multiplicationFactor = 1 << (i * 6);
+    if (i === 0 && (currentByte & 0x40) === 0x40) {
+      currentByte = currentByte ^ 0x40;
+      isNegative = true;
+    }
 
-      if (i > 1) {
-          multiplicationFactor = multiplicationFactor << 1;
-      }
+    let multiplicationFactor = 1 << (i * 6);
 
-      value += currentByte * multiplicationFactor;
+    if (i > 1) {
+      multiplicationFactor = multiplicationFactor << 1;
+    }
+
+    value += currentByte * multiplicationFactor;
+
+    if (isNegative) {
+      value *= -1;
+    }
   }
 
   return value;
 };
 
 utilService.writeModifiedLebCompressedInteger = function (value) {
+  const isNegative = value < 0;
+  value = Math.abs(value);
+
   if (value <= 63) {
-    return Buffer.from([value]);
+    const buffer = Buffer.from([value]);
+    const bv = new BitView(buffer, buffer.byteOffset);
+
+    if (isNegative) {
+      bv.setBits(6, 1, 1);
+    }
+
+    return buffer;
   }
   else if (value > 63 && value <= 8192) {
     const buffer = Buffer.from([0x0, 0x0]);
     const bv = new BitView(buffer, buffer.byteOffset);
-
+    
     const lowerBitValue = value % 64;
     bv.setBits(0, lowerBitValue, 6);
+
+    if (isNegative) {
+      bv.setBits(6, 1, 1);
+    }
+
     bv.setBits(7, 1, 1);
     
     const higherBitValue = Math.floor(value / 64);
@@ -290,6 +315,11 @@ utilService.writeModifiedLebCompressedInteger = function (value) {
 
     const lowerBitValue = value % 64;
     bv.setBits(0, lowerBitValue, 6);
+
+    if (isNegative) {
+      bv.setBits(6, 1, 1);
+    }
+
     bv.setBits(7, 1, 1);
     
     const midBitValue = Math.floor((value - 8192) / 64);

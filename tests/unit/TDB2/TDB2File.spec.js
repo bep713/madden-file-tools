@@ -152,6 +152,11 @@ describe('TDBv2 File unit tests', () => {
             expect(record.PEPS).to.equal('SmithGeno_112');
             expect(record.PGHE).to.equal(201);
         });
+
+        it('reads negative values as expected', () => {
+            const record = dbParser.file.PLAY.records[10];
+            expect(record.PLHY).to.equal(-31);
+        });
     });
 
     describe('TEAM', () => {
@@ -184,6 +189,12 @@ describe('TDBv2 File unit tests', () => {
             dbParser.file.DCHT.records[226].fields['PGID'].value = 20935;
             expect(dbParser.file.DCHT.records[226].fields['PGID'].value).to.equal(20935);
             expect(dbParser.file.DCHT.records[226].fields['PGID'].isChanged).to.equal(true);
+        });
+
+        it('int (negative)', () => {
+            dbParser.file.PLAY.records[2].fields['PLHY'].value = -30;
+            expect(dbParser.file.PLAY.records[2].fields['PLHY'].value).to.equal(-30);
+            expect(dbParser.file.PLAY.records[2].fields['PLHY'].isChanged).to.equal(true);
         });
 
         it('string', () => {

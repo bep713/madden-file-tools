@@ -136,6 +136,75 @@ describe('TDB2 writer unit tests', () => {
         });
     });
 
+    describe('changing mid table, negative int value', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            dbParser.file.PLAY.records[150].PLHY = -29;
+            generateOutputBuffer(done);
+        });
+
+        it('expected result', (done) => {
+            const dbParser2 = new TDB2Parser();
+
+            pipeline(
+                fs.createReadStream(testWritePath),
+                dbParser2,
+                (err) => {
+                    if (err) { console.error(err); }
+                    expect(dbParser2.file.PLAY.records[150].PLHY).to.equal(-29);
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('changing mid table, negative int value to positive', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            dbParser.file.PLAY.records[150].PLHY = 1;
+            generateOutputBuffer(done);
+        });
+
+        it('expected result', (done) => {
+            const dbParser2 = new TDB2Parser();
+
+            pipeline(
+                fs.createReadStream(testWritePath),
+                dbParser2,
+                (err) => {
+                    if (err) { console.error(err); }
+                    expect(dbParser2.file.PLAY.records[150].PLHY).to.equal(1);
+                    done();
+                }
+            );
+        });
+    });
+
+    describe('changing mid table, positive int value to negative', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            dbParser.file.PLAY.records[150].PGID = -100;
+            generateOutputBuffer(done);
+        });
+
+        it('expected result', (done) => {
+            const dbParser2 = new TDB2Parser();
+
+            pipeline(
+                fs.createReadStream(testWritePath),
+                dbParser2,
+                (err) => {
+                    if (err) { console.error(err); }
+                    expect(dbParser2.file.PLAY.records[150].PGID).to.equal(-100);
+                    done();
+                }
+            );
+        });
+    });
+
     describe('changing multiple tables', () => {
         before(function (done) {
             this.timeout(10000);
