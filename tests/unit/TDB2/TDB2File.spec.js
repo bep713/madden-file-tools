@@ -35,6 +35,32 @@ describe('TDBv2 File unit tests', () => {
             expect(dbParser.file.DCHT.rawKey).to.eql(Buffer.from([0x92, 0x3A, 0x34, 0x04, 0x03]));
         });
 
+        describe('field definitions', () => {
+            const tableName = 'DCHT';
+
+            it('DDEP', () => {
+                const table = dbParser.file[tableName];
+                const field = table.fieldDefinitions[0];
+
+                expect(field.type).to.equal(0);
+                expect(field.offset).to.equal(-1);
+                expect(field.name).to.equal('DDEP');
+                expect(field.bits).to.equal(-1);
+                expect(field.maxValue).to.equal(-1);
+            });
+
+            it('TGID', () => {
+                const table = dbParser.file[tableName];
+                const field = table.fieldDefinitions[3];
+
+                expect(field.type).to.equal(0);
+                expect(field.offset).to.equal(-1);
+                expect(field.name).to.equal('TGID');
+                expect(field.bits).to.equal(-1);
+                expect(field.maxValue).to.equal(-1);
+            });
+        });
+
         describe('first record', () => {
             it('DDEP', () => {
                 expect(dbParser.file.tables[0].records[0].fields['DDEP']).to.exist;
@@ -136,6 +162,32 @@ describe('TDBv2 File unit tests', () => {
     });
     
     describe('PLAY', () => {
+        describe('field definitions', () => {
+            const tableName = 'PLAY';
+
+            it('PFNA', () => {
+                const table = dbParser.file[tableName];
+                const field = table.fieldDefinitions[50];
+
+                expect(field.type).to.equal(1);
+                expect(field.offset).to.equal(-1);
+                expect(field.name).to.equal('PFNA');
+                expect(field.bits).to.equal(-1);
+                expect(field.maxValue).to.equal(-1);
+            });
+
+            it('BSBT', () => {
+                const table = dbParser.file[tableName];
+                const field = table.fieldDefinitions[3];
+
+                expect(field.type).to.equal(10);
+                expect(field.offset).to.equal(-1);
+                expect(field.name).to.equal('BSBT');
+                expect(field.bits).to.equal(-1);
+                expect(field.maxValue).to.equal(-1);
+            });
+        });
+
         it('expected table header', () => {
             expect(dbParser.file.PLAY.offset).to.equal(0x122B7);
             expect(dbParser.file.PLAY.name).to.equal('PLAY');

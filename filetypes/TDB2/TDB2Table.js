@@ -70,6 +70,22 @@ class TDB2Table {
     set rawKey(rawKey) {
         this._rawKey = rawKey;
     };
+
+    get fieldDefinitions() {
+        if (this._records.length > 0) {
+            return Object.keys(this._records[0].fields).map((fieldKey) => {
+                const field = this._records[0].fields[fieldKey];
+
+                return {
+                    'name': field.name,
+                    'type': field.type,
+                    'offset': -1,
+                    'bits': -1,
+                    'maxValue': -1
+                }
+            })
+        }
+    };
 };
 
 module.exports = TDB2Table;
