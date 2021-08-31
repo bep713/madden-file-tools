@@ -30,6 +30,7 @@
     "crc-32": "^1.2.0",
     "leb": "^0.3.0",
     "lz4": "^0.6.5",
+    "node-zstandard": "^1.2.4",
     "stream-parser": "^0.3.1"
   },
   "deprecated": false,
@@ -51,5 +52,5 @@
     "type": "git",
     "url": "https://github.com/bep713/madden-file-tools.git"
   },
-  "version": "2.5.2"
+  "version": "2.5.3"
 }

@@ -24,6 +24,21 @@ describe('util service unit tests', () => {
             expect(value).to.equal(3173);
         });
 
+        it('8191', () => {
+            const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0xBF, 0x7F]));
+            expect(value).to.eql(8191);
+        });
+
+        it('8192', () => {
+            const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0x80, 0x80, 0x01]));
+            expect(value).to.eql(8192);
+        });
+
+        it('8193', () => {
+            const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0x81, 0x80, 0x01]));
+            expect(value).to.eql(8193);
+        });
+
         it('returns expected value (three digits)', () => {
             const value = utilService.readModifiedLebCompressedInteger(Buffer.from([0x87, 0xA3, 0x01]));
             expect(value).to.equal(10439);
@@ -61,9 +76,29 @@ describe('util service unit tests', () => {
             expect(value).to.eql(Buffer.from([0x80, 0x01]));
         });
 
+        it('65', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(65);
+            expect(value).to.eql(Buffer.from([0x81, 0x01]));
+        });
+
         it('returns expected value (two digits)', () => {
             const value = utilService.writeModifiedLebCompressedInteger(3173);
             expect(value).to.eql(Buffer.from([0xA5, 0x31]));
+        });
+
+        it('8191', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(8191);
+            expect(value).to.eql(Buffer.from([0xBF, 0x7F]));
+        });
+
+        it('8192', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(8192);
+            expect(value).to.eql(Buffer.from([0x80, 0x80, 0x01]));
+        });
+
+        it('8193', () => {
+            const value = utilService.writeModifiedLebCompressedInteger(8193);
+            expect(value).to.eql(Buffer.from([0x81, 0x80, 0x01]));
         });
 
         it('returns expected value (three digits)', () => {

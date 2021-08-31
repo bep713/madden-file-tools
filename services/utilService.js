@@ -291,7 +291,7 @@ utilService.writeModifiedLebCompressedInteger = function (value) {
 
     return buffer;
   }
-  else if (value > 63 && value <= 8192) {
+  else if (value > 63 && value < 8192) {
     const buffer = Buffer.from([0x0, 0x0]);
     const bv = new BitView(buffer, buffer.byteOffset);
     

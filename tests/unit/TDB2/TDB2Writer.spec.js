@@ -136,6 +136,29 @@ describe('TDB2 writer unit tests', () => {
         });
     });
 
+    describe('changing mid table, float value', () => {
+        before(function (done) {
+            this.timeout(10000);
+
+            dbParser.file.PLAY.records[25].BSAA = 0.75;
+            generateOutputBuffer(done);
+        });
+
+        it('expected result', (done) => {
+            const dbParser2 = new TDB2Parser();
+
+            pipeline(
+                fs.createReadStream(testWritePath),
+                dbParser2,
+                (err) => {
+                    if (err) { console.error(err); }
+                    expect(dbParser2.file.PLAY.records[25].BSAA).to.equal(0.75);
+                    done();
+                }
+            );
+        });
+    });
+
     describe('changing mid table, negative int value', () => {
         before(function (done) {
             this.timeout(10000);
