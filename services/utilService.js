@@ -333,4 +333,29 @@ utilService.writeModifiedLebCompressedInteger = function (value) {
   }
 };
 
+utilService.readGuid = function (existingBuf, index) {
+  const buf = Buffer.from(existingBuf.slice(index, index + 16));
+  const res = utilService.parseGuid(buf);
+  return res;
+};
+
+utilService.parseGuid = function (buf) {
+  const parsedBuf = [buf.slice(0, 4).swap32(), buf.slice(4, 6).swap16(), buf.slice(6, 8).swap16(), buf.slice(8, 10), buf.slice(10, 16)];
+  return `${parsedBuf[0].toString('hex')}-${parsedBuf[1].toString('hex')}-${parsedBuf[2].toString('hex')}-${parsedBuf[3].toString('hex')}-${parsedBuf[4].toString('hex')}`;
+};
+
+utilService.flattenObject = (obj) => {
+  const flattened = {}
+
+  Object.keys(obj).forEach((key) => {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      Object.assign(flattened, utilService.flattenObject(obj[key]))
+    } else {
+      flattened[key] = obj[key]
+    }
+  })
+
+  return flattened
+};
+
 module.exports = utilService;
