@@ -12,7 +12,9 @@ let parser;
 describe('CAS Block Parser unit tests', () => {
     let blocks = [];
 
-    before((done) => {
+    before(function (done) {
+        this.timeout(20000);
+
         parser = new CASBlockParser();
 
         parser.on('block', (block) => {
@@ -34,7 +36,7 @@ describe('CAS Block Parser unit tests', () => {
     });
 
     it('emits an event for each CAS block parsed', () => {
-        expect(blocks.length).to.equal(715)
+        expect(blocks.length).to.equal(712)
     });
 
     it('block contains expected data', () => {

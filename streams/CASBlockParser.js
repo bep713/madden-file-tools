@@ -41,9 +41,11 @@ class CASBlockParser extends FileParser {
             block.meta.compressedSize = buf.readUInt16BE(6);
 
             if (block.meta.compressionType === CASBlockParser.COMPRESSION_TYPE.UNCOMPRESSED) {
-                this.bytes(block.meta.size - 4, (dataBuf) => {
-                    this._onBlockEnd(Buffer.concat([buf.slice(4), dataBuf]), block);
-                });
+                if (block.meta.size > 0) {
+                    this.bytes(block.meta.size - 8, (dataBuf) => {
+                        this._onBlockEnd(Buffer.concat([buf.slice(4), dataBuf]), block);
+                    });
+                }
             }
             else {
                 block.meta.isCompressed = true;
