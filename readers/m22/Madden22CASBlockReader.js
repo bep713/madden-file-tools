@@ -1,112 +1,147 @@
 const fs = require('fs');
 const path = require('path');
-const zstd = require('node-zstandard');
-const { pipeline } = require('stream');
+const uuid = require('uuid').v4;
+const zstd = require('@fstnetwork/cppzst');
+const { pipeline, Readable } = require('stream');
 
 const EBXParser = require('../../streams/ebx/EBXParser');
 const CASBlockParser = require('../../streams/CASBlockParser');
 const EBXDataReader = require('./EBXDataReader');
 
 class Madden22CASBlockReader {
-    constructor(casPath, types) {
+    constructor(casPath, types, options) {
         this._types = types;
         this._casPath = casPath;
+        this._options = options;
 
         this._ebxs = [];
         this._parseEbxPromises = [];
+        this._tempDirectory = path.join(__dirname, '../../scripts/temp');
+
         this._casParser = new CASBlockParser();
-        this._casParser.on('block', this._onCasBlock.bind(this));
+        this._casParser.on('chunk', this._onCasChunk.bind(this));
+    };
+
+    get tempDirectory() {
+        return this._tempDirectory;
+    };
+
+    set tempDirectory(temp) {
+        this._tempDirectory = temp;
     };
 
     read() {
-        return new Promise((resolve, reject) => {
+        let readStreamOptions = {};
+
+        if (this._options) {
+            if (this._options.start) {
+                readStreamOptions.start = this._options.start;
+            }
+
+            if (this._options.size) {
+                if (!readStreamOptions.start) {
+                    readStreamOptions.start = 0;
+                }
+
+                readStreamOptions.end = readStreamOptions.start + this._options.size;
+            }
+        }
+
+        return new Promise(async (resolve, reject) => {
             pipeline(
-                fs.createReadStream(this._casPath),
+                fs.createReadStream(this._casPath, readStreamOptions),
                 this._casParser,
-                (err) => {
+                async (err) => {
                     if (err) {
                         reject(err);
                     }
             
-                    Promise.all(this._parseEbxPromises)
-                        .then(() => {
-                            resolve(this._ebxs);
-                        });
+                    const ebxList = await Promise.all(this._parseEbxPromises)
+                    resolve(ebxList);
                 }
             );
         });
     };
 
-    _onCasBlock(block) {
-        if (block.meta.isCompressed) {
-            switch(block.meta.compressionType) {
+    _onCasChunk(chunk) {
+        const firstBlock = chunk.blocks[0];
+
+        if (firstBlock.meta.isCompressed) {
+            switch(firstBlock.meta.compressionType) {
                 case CASBlockParser.COMPRESSION_TYPE.ZSTD:
-                    this._onZstdCompressedBlock(block);
+                    this._onZstdCompressedBlock(chunk);
                     break;
             };
         }
     };
 
-    _onZstdCompressedBlock(block) {
-        this._parseEbxPromises.push(new Promise((resolve, reject) => {
-            const tempFilePath = path.join(__dirname, `../../scripts/temp/${block.meta.offset}.bin`);
-            fs.writeFile(tempFilePath, block.data, (err) => {
-                if (err) {
-                    resolve(err);
-                }
-                else {
-                    zstd.decompressFileToFile(tempFilePath, `${tempFilePath}.ebx`, (err, result) => {
-                        if (err) {
-                            resolve(err);
+    _onZstdCompressedBlock(chunk) {
+        this._parseEbxPromises.push(new Promise(async (resolve, reject) => {
+            let decompressionPromises = chunk.blocks.map((block, index) => {
+                return new Promise(async (resolve, reject) => {
+
+                    try {
+                        const decompressedData = await zstd.decompress(block.data);
+                        resolve({
+                            index: index,
+                            data: decompressedData
+                        });
+                    }
+                    catch (err) {
+                        resolve({
+                            index: index,
+                            data: null
+                        });
+                    }
+                });
+            });
+            
+            const decompressedDataBufferMetadata = await Promise.all(decompressionPromises);
+            decompressedDataBufferMetadata.sort((a, b) => {
+                return a.index - b.index;
+            });
+            
+            const decompressedDataBuffers = decompressedDataBufferMetadata.filter((meta) => {
+                return meta.data !== null;
+            }).map((meta) => {
+                return meta.data;
+            });
+            
+            const decompressedData = Buffer.concat(decompressedDataBuffers);            
+            const readStream = Readable.from(decompressedData);
+            let ebxParser = new EBXParser();
+            
+            pipeline(
+                readStream,
+                ebxParser,
+                (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    
+                    let ebxFile = ebxParser._file;
+                    ebxFile.offset = chunk.offset;
+                    ebxFile.sizeInCas = chunk.sizeInCas;
+
+                    if (this._options && this._options.readEbxData) {
+                        let reader = new EBXDataReader(this._types);
+
+                        try {
+                            ebxFile.data = reader.readEbxData(ebxFile);
                         }
-                        else {
-                            fs.unlink(tempFilePath, (err) => {
-                                if (err) {
-                                    resolve(err);
-                                }
-                                else {
-                                    let ebxParser = new EBXParser();
-
-                                    pipeline(
-                                        fs.createReadStream(`${tempFilePath}.ebx`),
-                                        ebxParser,
-                                        (err) => {
-                                            if (err) {
-                                                resolve(err);
-                                            }
-
-                                            let ebxFile = ebxParser._file;
-                                            let reader = new EBXDataReader(this._types);
-
-                                            let data;
-
-                                            try {
-                                                data = reader.readEbxData(ebxFile);
-                                                ebxFile.name = data.mainObject.Name;
-                                                ebxFile.data = data;
-                                            }
-                                            catch (err) {
-                                                resolve(err);
-                                            }
-
-                                            fs.unlink(`${tempFilePath}.ebx`, (err) => {
-                                                if (err) {
-                                                    resolve(err);
-                                                }
-                                                
-                                                this._ebxs.push(ebxFile);
-                                                resolve(ebxFile);
-                                            })
-                                        }
-                                    )
-                                }
-                            });
+                        catch (err) {
+                            console.log(err);
+                            // const fileId = ebxFile.ebx.efix ? ebxFile.ebx.efix.fileGuid : `no_efix_${uuid()}`;
+                            // fs.writeFileSync(path.join(__dirname, `../../tests/data/ebx/failed-ebx/${fileId}.uncompressed.ebx`), decompressedData);
+                            return reject(err);
                         }
-                    });
-                }
-            })
-        }));
+                    }
+                    
+                    // this._ebxs.push(ebxFile);
+                    resolve(ebxFile);
+                });
+            }));
+        };
     };
-};
-
-module.exports = Madden22CASBlockReader;
+    
+    module.exports = Madden22CASBlockReader;

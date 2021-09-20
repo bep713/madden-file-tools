@@ -72,6 +72,10 @@ describe('EBX Parser unit tests', () => {
                     it('raw data block', () => {
                         expect(file.ebx.ebxd.rawDataBlock.length).to.equal(0xF0)
                     });
+
+                    it('string offset', () => {
+                        expect(file.ebx.ebxd.stringOffset).to.equal(0x98);
+                    });
                 });
 
                 describe('EFIX', () => {
@@ -206,6 +210,10 @@ describe('EBX Parser unit tests', () => {
                     });
                 });
             });
+
+            it('parses the file name', () => {
+                expect(file.name).to.equal('Sound/Speech/TV/SoundWaves/secondary_LCU/bLCU_INTRO_HELLO_TEAMS');
+            });
         });
 
         describe('can parse a complex ebx', () => {
@@ -283,6 +291,10 @@ describe('EBX Parser unit tests', () => {
                     expect(ebxx.ebxxs.length).to.equal(7);
                     expect(ebxx.ebxxs[4]).to.eql(Buffer.from([0xFC, 0x0F, 0x00, 0x00, 0x52, 0x00, 0x00, 0x00, 0x3F, 0xF6, 0xDF, 0xA6, 0x48, 0x00, 0x0F, 0x00]));
                 });
+            });
+
+            it('parses the file name', () => {
+                expect(file.name).to.equal('global/DSub/InGame/FootballAbilitiesDSub/[046]_Correct_Run_Commit_Super_Wins');
             });
         });
 

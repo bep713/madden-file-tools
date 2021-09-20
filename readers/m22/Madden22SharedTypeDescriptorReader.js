@@ -26,7 +26,8 @@ class Madden22SharedTypeDescriptorReader {
                         reject(err);
                     }
         
-                    maddenTypeService.loadTypesFromFile(this._classDefinitionFilePath);
+                    // maddenTypeService.loadTypesFromFile(this._classDefinitionFilePath);
+                    maddenTypeService.types = JSON.parse(fs.readFileSync(this._classDefinitionFilePath));
                     maddenTypeService.mergeTypes(this._sharedTypeParser._file.types);
                     resolve(this._sharedTypeParser._file.types);
                 }

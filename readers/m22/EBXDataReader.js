@@ -48,12 +48,14 @@ class EBXDataReader {
             let fieldObj = new EBXField(field);
             fieldObj.ebxDataOffset = field.offset + offset;
 
+            // console.log(`Field: ${field.name} @ offset: ${fieldObj.ebxDataOffset.toString(16)}`);
+
             if (field.type === EBXFieldTypes.Inherited) {
                 const inheritedType = this._types.getTypeByIndex(field.classRef);
                 obj = { ...obj, ...this._readFields(inheritedType, offset) };
             }
             else if (field.isArray) {
-                fieldObj.valueOffset = this._buf.readUInt32LE(fieldObj.ebxDataOffset);
+                fieldObj.valueOffset = this._buf.readInt32LE(fieldObj.ebxDataOffset);
                 fieldObj.arrayCount = this._buf.readUInt32LE(fieldObj.ebxDataOffset + fieldObj.valueOffset - 4);
                 fieldObj.value = [];
 
@@ -65,12 +67,30 @@ class EBXDataReader {
                         fieldSize = this._types.getTypeByIndex(field.classRef).size;
                         break;
 
+                    case EBXFieldTypes.Long:
                     case EBXFieldTypes.Pointer:
+                    case EBXFieldTypes.Float64:
+                    case EBXFieldTypes.UnsignedLong:
                         fieldSize = 8;
                         break;
 
                     case EBXFieldTypes.Guid:
                         fieldSize = 16;
+                        break;
+
+                    case EBXFieldTypes.Byte:
+                    case EBXFieldTypes.Boolean:
+                    case EBXFieldTypes.UnsignedByte:
+                        fieldSize = 1;
+                        break;
+
+                    case EBXFieldTypes.Sha1:
+                        fieldSize = 20;
+                        break;
+
+                    case EBXFieldTypes.Short:
+                    case EBXFieldTypes.UnsignedShort:
+                        fieldSize = 2;
                         break;
                     
                     default:
@@ -80,6 +100,7 @@ class EBXDataReader {
 
                 for (let i = 0; i < fieldObj.arrayCount; i++) {
                     let arrayFieldObj = new EBXField(fieldObj.field, currentPosition + (i * fieldSize));
+                    // console.log(currentPosition + (i * fieldSize));
                     this._readField(arrayFieldObj, currentPosition + (i * fieldSize));
                     fieldObj.value.push(arrayFieldObj.value);
                 }
@@ -90,7 +111,7 @@ class EBXDataReader {
             
             obj[field.name] = fieldObj;
 
-            let logMessage = `Field: ${field.name} @ offset: ${fieldObj.ebxDataOffset.toString(16)}.`;
+            // let logMessage = `Field: ${field.name} @ offset: ${fieldObj.ebxDataOffset.toString(16)}.`;
 
             if (fieldObj.value) {
                 // logMessage += ` Value: ${fieldObj.value}`;
@@ -109,6 +130,8 @@ class EBXDataReader {
 
                 const structType = this._types.getTypeByIndex(fieldObj.field.classRef);
                 structDataObject.type = structType;
+
+                // console.log(`Struct: ${structType.name} @ offset: ${fieldObj.ebxDataOffset.toString(16)}`);
 
                 structDataObject.fields = this._readFields(structType, fieldObj.ebxDataOffset);
                 fieldObj.value = structDataObject.proxy;
@@ -167,12 +190,28 @@ class EBXDataReader {
                 fieldObj.value = this._buf.readUInt32LE(fieldObj.ebxDataOffset);
                 break;
 
+            case EBXFieldTypes.UnsignedLong:
+                fieldObj.value = this._buf.readBigUInt64LE(fieldObj.ebxDataOffset);
+                break;
+
+            case EBXFieldTypes.Long:
+                fieldObj.value = this._buf.readBigInt64LE(fieldObj.ebxDataOffset);
+                break;
+
             case EBXFieldTypes.Float32:
+                fieldObj.value = Math.round(100 * this._buf.readFloatLE(fieldObj.ebxDataOffset)) / 100;
+                break;
+
+            case EBXFieldTypes.Float64:
                 fieldObj.value = Math.round(100 * this._buf.readFloatLE(fieldObj.ebxDataOffset)) / 100;
                 break;
 
             case EBXFieldTypes.Guid:
                 fieldObj.value = utilService.readGuid(this._buf, fieldObj.ebxDataOffset);
+                break;
+
+            case EBXFieldTypes.Sha1:
+                fieldObj.value = this._buf.slice(fieldObj.ebxDataOffset, fieldObj.ebxDataOffset + 20);
                 break;
 
             case EBXFieldTypes.ResourceReference:

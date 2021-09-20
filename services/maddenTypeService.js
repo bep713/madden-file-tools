@@ -124,6 +124,8 @@ maddenTypeService.getFieldByHash = (hash) => {
 };
 
 maddenTypeService.mergeTypes = (sharedTypeDescriptors) => {
+    // console.log(sharedTypeDescriptors);
+
     maddenTypeService.types.forEach((type) => {
         const hash = type.type.nameHash;
         const stdType = sharedTypeDescriptors.getTypeByHash(hash);

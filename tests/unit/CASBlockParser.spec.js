@@ -5,12 +5,13 @@ const { pipeline } = require('stream');
 const CASBlockParser = require('../../streams/CASBlockParser');
 
 // This uses an external CAS file to test. Comment out if you don't have this file :)
-const CAS_FILE_PATH = 'D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_lcu\\cas_01.cas';
+const CAS_FILE_PATH = 'D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_01.cas';
 
 let parser;
 
 describe('CAS Block Parser unit tests', () => {
     let blocks = [];
+    let chunks = [];
 
     before(function (done) {
         this.timeout(20000);
@@ -19,6 +20,10 @@ describe('CAS Block Parser unit tests', () => {
 
         parser.on('block', (block) => {
             blocks.push(block);
+        });
+
+        parser.on('chunk', (chunk) => {
+            chunks.push(chunk);
         });
 
         pipeline(
@@ -35,31 +40,32 @@ describe('CAS Block Parser unit tests', () => {
         );
     });
 
-    it('emits an event for each CAS block parsed', () => {
-        expect(blocks.length).to.equal(712)
+    it('emits an event for each CAS chunk parsed', () => {
+        expect(chunks.length).to.equal(47437);
+    });
+
+    it('chunk contains expected data', () => {
+        expect(chunks[0].blocks.length).to.equal(6);
+        expect(chunks[0].offset).to.equal(0);
+        expect(chunks[0].sizeInCas).to.equal(0x16E);
+
+        expect(chunks[1].offset).to.equal(0x16E);
+        expect(chunks[1].sizeInCas).to.equal(0x16E);
+
+        expect(chunks[2].offset).to.equal(0x2DC);
+        expect(chunks[2].sizeInCas).to.equal(0xD8);
     });
 
     it('block contains expected data', () => {
-        expect(blocks[0].meta).to.eql({
-            size: 32,
+        const block = chunks[0].blocks[0];
+
+        expect(block.meta).to.eql({
+            size: 0x10000,
             offset: 0,
-            type: 0xD68E799D,
-            isCompressed: false
-        });
-
-        expect(blocks[0].data.length).to.equal(32);
-    });
-
-    it('compressed block contains expected data', () => {
-        expect(blocks[2].meta).to.eql({
-            size: 540,
-            offset: 0x720C,
             isCompressed: true,
-            compressionIndicator: 0x700F,
-            compressionType: CASBlockParser.COMPRESSION_TYPE.ZSTD,
-            compressedSize: 373
+            compressionType: CASBlockParser.COMPRESSION_TYPE.OODLE,
+            compressedSize: 0x35,
+            compressionIndicator: 0x7011
         });
-
-        expect(blocks[2].data.length).to.equal(373);
     });
 });

@@ -16,6 +16,7 @@ const MODERATE_EBX_PATH = path.join(__dirname, '../../data/ebx/M22_gamestyle_yar
 const HIGH_EBX_PATH = path.join(__dirname, '../../data/ebx/M22_Correct_Run_Commit_Super_Wins.ebx.uncompress.dat');
 const POINTERS_EBX_PATH = path.join(__dirname, '../../data/ebx/M22_DRAFTContextSystem.ebx.uncompress.dat');
 const RESOURCE_REF_PATH = path.join(__dirname, '../../data/ebx/M22_NewEraLogo.ebx.uncompress.dat');
+const ARRAY_ISSUE_REF_PATH = path.join(__dirname, '../../data/ebx/M22_FieldAlignment.ebx.uncompress.dat');
 
 const sharedTypeDescriptorsM22Path = path.join(__dirname, '../../data/ebx/SharedTypeDescriptors.ebx_M22.dat');
 
@@ -193,34 +194,104 @@ describe('ebx data reader unit tests', () => {
         });
     });
 
-    // describe('Resource and Type references', () => {
-    //     before(async () => {
-    //         parser = new EBXParser();
-    //         let readEbxPromise = new Promise((resolve, reject) => {
-    //             pipeline(
-    //                 fs.createReadStream(RESOURCE_REF_PATH),
-    //                 parser,
-    //                 (err) => {
-    //                     if (err) {
-    //                         reject(err);
-    //                     }
+    describe('Resource and Type references', () => {
+        before(async () => {
+            parser = new EBXParser();
+            let readEbxPromise = new Promise((resolve, reject) => {
+                pipeline(
+                    fs.createReadStream(RESOURCE_REF_PATH),
+                    parser,
+                    (err) => {
+                        if (err) {
+                            reject(err);
+                        }
     
-    //                     resolve(parser._file);    
-    //                 }       
-    //             );
-    //         });
+                        resolve(parser._file);    
+                    }       
+                );
+            });
     
-    //         await Promise.all([readEbxPromise]);
+            await Promise.all([readEbxPromise]);
     
-    //         ebxFile = parser._file;
-    //         reader = new EBXDataReader(types);
-    //     });
+            ebxFile = parser._file;
+            reader = new EBXDataReader(types);
+        });
 
-    //     it('returns expected result', () => {
-    //         const ebxData = reader.readEbxData(ebxFile);
+        it('returns expected result', () => {
+            const ebxData = reader.readEbxData(ebxFile);
 
-    //         expect(ebxData.mainObject.Name).to.equal('content/common/textures/logos/NewEraLogo01_TRAN');
-    //         expect(ebxData.mainObject.Resource.resourceId.toString()).to.be.equal(17754181949446070057n.toString());
-    //     });
-    // });
+            expect(ebxData.mainObject.Name).to.equal('content/common/textures/logos/NewEraLogo01_TRAN');
+            expect(ebxData.mainObject.Resource.resourceId.toString()).to.be.equal(17754181949446070057n.toString());
+        });
+    });
+
+    describe('Array issue', () => {
+        before(async () => {
+            parser = new EBXParser();
+            let readEbxPromise = new Promise((resolve, reject) => {
+                pipeline(
+                    fs.createReadStream(ARRAY_ISSUE_REF_PATH),
+                    parser,
+                    (err) => {
+                        if (err) {
+                            reject(err);
+                        }
+    
+                        resolve(parser._file);    
+                    }       
+                );
+            });
+    
+            await Promise.all([readEbxPromise]);
+    
+            ebxFile = parser._file;
+            reader = new EBXDataReader(types);
+        });
+
+        it('returns expected result', () => {
+            const ebxData = reader.readEbxData(ebxFile);
+
+            expect(ebxData.mainObject.Name).to.equal('Football/Attribsys/data/field_alignment/field_alignment/field_alignment');
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets.length).to.eql(3)
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData.length).to.eql(3)
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[0].fieldSideData).to.eql([20, 20])
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[1].fieldSideData).to.eql([23, 17])
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[2].fieldSideData).to.eql([21.5, 18.5])
+        });
+    });
+
+    describe('unknown issue', () => {
+        before(async () => {
+            parser = new EBXParser();
+            let readEbxPromise = new Promise((resolve, reject) => {
+                pipeline(
+                    fs.createReadStream(path.join(__dirname, '../../data/ebx/failed-ebx/0fbe3fbf-2d79-11eb-85cb-b90b84fd4a03.ebx')),
+                    parser,
+                    (err) => {
+                        if (err) {
+                            reject(err);
+                        }
+    
+                        resolve(parser._file);    
+                    }       
+                );
+            });
+    
+            await Promise.all([readEbxPromise]);
+    
+            ebxFile = parser._file;
+            reader = new EBXDataReader(types);
+        });
+
+        it('returns expected result', () => {
+            const ebxData = reader.readEbxData(ebxFile);
+
+            expect(ebxData.mainObject.Name).to.equal('Football/Attribsys/data/field_alignment/field_alignment/field_alignment');
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets.length).to.eql(3)
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData.length).to.eql(3)
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[0].fieldSideData).to.eql([20, 20])
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[1].fieldSideData).to.eql([23, 17])
+            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[2].fieldSideData).to.eql([21.5, 18.5])
+        });
+    });
 });

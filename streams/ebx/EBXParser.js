@@ -35,6 +35,8 @@ class EBXParser extends FileParser {
         this._file.ebx.ebxd.fileGuid = readGuid(buf, 0xC);
         this._file.ebx.ebxd.raw = buf;
         this._file.ebx.ebxd.rawDataBlock = buf.slice(0x1C);
+        this._file.ebx.ebxd.stringOffset = buf.readUInt32LE(0x34);
+        this._file.name = readCString(buf, (this._file.ebx.ebxd.stringOffset + 0x34));
 
         if (this.currentBufferIndex % 2 != 0) {
             this.bytes(0x9, (buf) => {
@@ -186,3 +188,15 @@ class EBXParser extends FileParser {
 };
 
 module.exports = EBXParser;
+
+function readCString(buf, offset) {
+    let currentPosition = offset;
+    let currentByte = buf.readUInt8(currentPosition);
+
+    while (currentByte != 0) {
+        currentPosition += 1;
+        currentByte = buf.readUInt8(currentPosition);
+    }
+
+    return buf.toString('utf8', offset, currentPosition);
+};
