@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const uuid = require('uuid').v4;
 const zstd = require('@fstnetwork/cppzst');
-const { pipeline, Readable } = require('stream');
+const { pipeline, Readable, Transform } = require('stream');
 
+const EBXDataReader = require('./EBXDataReader');
 const EBXParser = require('../../streams/ebx/EBXParser');
 const CASBlockParser = require('../../streams/CASBlockParser');
-const EBXDataReader = require('./EBXDataReader');
 
 class Madden22CASBlockReader {
     constructor(casPath, types, options) {
@@ -110,16 +110,29 @@ class Madden22CASBlockReader {
             const decompressedData = Buffer.concat(decompressedDataBuffers);            
             const readStream = Readable.from(decompressedData);
             let ebxParser = new EBXParser();
+
+            let pipes = [ebxParser];
+            let ebxData = Buffer.from([]);
+
+            if (this._options.exportOptions && this._options.exportOptions.export) {
+                pipes.unshift(new Transform({
+                    transform(chunk, enc, cb) {
+                        ebxData = Buffer.concat([ebxData, chunk]);
+                        cb();
+                    }
+                }))
+            }
             
             pipeline(
                 readStream,
-                ebxParser,
+                ...pipes,
                 (err) => {
                     if (err) {
                         reject(err);
                     }
                     
                     let ebxFile = ebxParser._file;
+                    ebxFile.data = ebxData;
                     ebxFile.offset = chunk.offset;
                     ebxFile.sizeInCas = chunk.sizeInCas;
 

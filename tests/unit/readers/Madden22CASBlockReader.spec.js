@@ -107,6 +107,30 @@ describe('M22 CAS Block Reader unit tests', () => {
         });
     });
 
+    describe('single chunk CAS read - export uncompressed data', () => {
+        before(async function () {
+            this.timeout(40000);
+            reader = new M22CasBlockReader(CAS_PATH, types, {
+                start: 0x100D3,
+                size: 0xD2,
+                exportOptions: {
+                    export: true,
+                    uncompressed: true
+                }
+            });
+
+            ebxList = await reader.read();
+        });
+
+        it('expected result', () => {
+            expect(ebxList.length).to.equal(1);
+
+            const ebxFile = ebxList[0];
+            expect(ebxFile.data).to.exist;
+            expect(ebxFile.data.length).to.equal(306);
+        });
+    });
+
     describe('multiple CAS reads at once (without worker pool)', () => {
         let ebxLists = [];
 
@@ -129,35 +153,35 @@ describe('M22 CAS Block Reader unit tests', () => {
         });
     });
 
-    describe('multiple CAS reads at once (using worker pool)', () => {
-        let ebxLists = [];
+    // describe('multiple CAS reads at once (using worker pool)', () => {
+    //     let ebxLists = [];
 
-        before(async function () {
-            this.timeout(100000);
+    //     before(async function () {
+    //         this.timeout(100000);
 
-            const staticPool = new StaticPool({
-                size: 6,
-                task: async function (fileName, types) {
-                    const M22CasBlockReader = require('./readers/m22/Madden22CASBlockReader');
-                    const zstd = require('@fstnetwork/cppzst');
-                    let reader = new M22CasBlockReader(fileName, types);
-                    const ebxList = await reader.read();
-                    return ebxList;
-                }
-            });
+    //         const staticPool = new StaticPool({
+    //             size: 6,
+    //             task: async function (fileName, types) {
+    //                 const M22CasBlockReader = require('./readers/m22/Madden22CASBlockReader');
+    //                 const zstd = require('@fstnetwork/cppzst');
+    //                 let reader = new M22CasBlockReader(fileName, types);
+    //                 const ebxList = await reader.read();
+    //                 return ebxList;
+    //             }
+    //         });
 
-            let ebxReadPromises = [];
+    //         let ebxReadPromises = [];
     
-            for (let i = 1; i < 7; i++) {
-                const casPath = `D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_0${i}.cas`;
-                ebxReadPromises.push(staticPool.exec(casPath, types));
-            }
+    //         for (let i = 1; i < 7; i++) {
+    //             const casPath = `D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_0${i}.cas`;
+    //             ebxReadPromises.push(staticPool.exec(casPath, types));
+    //         }
 
-            ebxLists = await Promise.all(ebxReadPromises);
-        });
+    //         ebxLists = await Promise.all(ebxReadPromises);
+    //     });
 
-        it('expected result', () => {
-            expect(ebxLists.length).to.equal(6);
-        });
-    });
+    //     it('expected result', () => {
+    //         expect(ebxLists.length).to.equal(6);
+    //     });
+    // });
 });
