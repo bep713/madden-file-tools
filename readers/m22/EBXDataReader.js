@@ -27,6 +27,10 @@ class EBXDataReader {
             const typeInfoGuid = ebxFile.ebx.efix.typeInfoGuids[classRef];
             const type = this._types.getTypeByTypeInfoGuid(typeInfoGuid);
 
+            if (type._name === 'ChunkFileCollector') {
+                console.log(ebxFile.name);
+            }
+
             dataObject.dataBuffer = this._buf;
             dataObject.classRef = classRef;
             dataObject.typeInfoGuid = typeInfoGuid;

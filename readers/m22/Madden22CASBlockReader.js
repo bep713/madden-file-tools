@@ -114,7 +114,7 @@ class Madden22CASBlockReader {
             let pipes = [ebxParser];
             let ebxData = Buffer.from([]);
 
-            if (this._options.exportOptions && this._options.exportOptions.export) {
+            if (this._options && this._options.exportOptions && this._options.exportOptions.export) {
                 pipes.unshift(new Transform({
                     transform(chunk, enc, cb) {
                         ebxData = Buffer.concat([ebxData, chunk]);

@@ -10,7 +10,7 @@ const { pipeline, Transform } = require('stream');
 const m22TypesPath = path.join(__dirname, '../../data/types/M22Types.json');
 const sharedTypeDescriptorsM22Path = path.join(__dirname, '../../data/ebx/SharedTypeDescriptors.ebx_M22.dat');
 
-const CAS_PATH = 'D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_01.cas';
+const CAS_PATH = 'D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_lcu\\cas_01.cas';
 
 let stdReader, reader, ebxList, types;
 
@@ -24,7 +24,9 @@ describe('M22 CAS Block Reader unit tests', () => {
     describe('single CAS read', () => {
         before(async function () {
             this.timeout(40000);
-            reader = new M22CasBlockReader(CAS_PATH, types);
+            reader = new M22CasBlockReader(CAS_PATH, types, {
+                readEbxData: true
+            });
             ebxList = await reader.read();
         });
 
