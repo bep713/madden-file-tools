@@ -50,8 +50,24 @@ class TOCParser extends stream.Writable {
 
     _onEntryStart(buf, scope, entryList) {
         const entry = new Entry(0, scope);
-        
+
         switch(buf[0]) {
+            case 0x81:
+                entry.type = 'list';
+                entryList.push(entry);
+
+                this._parseLEB(null, function (leb) {
+                    entry.leb = leb;
+                    entry.startIndex = this._currentBufferIndex;
+                    entry._entries = [];
+                    
+                    this._bytes(1, (buf) => {
+                        this._currentBufferIndex += 1;
+                        this._onEntryStart(buf, entry, entry._entries);
+                    });
+                });
+
+                break;
             case 0x82:
                 entry.type = 'normal';
                 entryList.push(entry);
@@ -237,7 +253,15 @@ class TOCParser extends stream.Writable {
             }
 
             if (parent instanceof Entry) {
-                this._onEntryFields(parent);
+                if (parent.type === 'list') {
+                    this._bytes(1, (buf) => {
+                        this._currentBufferIndex += 1;
+                        this._onEntryStart(buf, parent, parent._entries);
+                    });
+                }
+                else {
+                    this._onEntryFields(parent);
+                }
             }
             else {
                 this._bytes(1, function (buf) {

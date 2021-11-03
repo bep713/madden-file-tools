@@ -6,18 +6,21 @@ const expect = require('chai').expect;
 
 const tocPath = path.join(__dirname, '../data/layout.toc');
 const fsPath = path.join(__dirname, '../data/initfs_Win32');
+const decryptedFsPath = path.join(__dirname, '../data/decrypted_initfs_data');
 
 const TOCParser = require('../../streams/TOCParser');
 
-let layoutParser, fsParser;
+let layoutParser, fsParser, decryptedFsParser;
 
 describe('TOCFile unit tests', () => {
     before((done) => {
         layoutParser = new TOCParser();
         fsParser = new TOCParser();
+        decryptedFsParser = new TOCParser();
 
         const stream = fs.createReadStream(tocPath);
         const stream2 = fs.createReadStream(fsPath);
+        const stream3 = fs.createReadStream(decryptedFsPath);
 
         stream.on('end', () => {
             stream2
@@ -25,6 +28,11 @@ describe('TOCFile unit tests', () => {
         });
 
         stream2.on('end', () => {
+            stream3
+                .pipe(decryptedFsParser);
+        });
+
+        stream3.on('end', () => {
             done();
         });
 
@@ -170,6 +178,12 @@ describe('TOCFile unit tests', () => {
 
         it('parses blob fields', () => {
             expect(fsParser._file.root.encrypted).to.not.be.undefined;
+        });
+
+        it('parses lists as the root element', () => {
+            expect(decryptedFsParser._file._entries[0]._entries.length).to.equal(264);
+            expect(decryptedFsParser._file.root._entries[0]['$file'].name).to.equal('SharedTypeDescriptors.ebx');
+            expect(decryptedFsParser._file.root._entries[0]['$file'].payload.length).to.equal(474024);
         });
     });
 });
