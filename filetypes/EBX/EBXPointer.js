@@ -19,6 +19,26 @@ class EBXPointer {
     set ref(ref) {
         this._ref = ref;
     };
+
+    get proxy() {
+        const that = this;
+
+        return new Proxy(this, {
+            get: function (target, prop, receiver) {
+                return that.ref.fields[prop] !== undefined ? that.ref.fields[prop].value : that[prop] !== undefined ? that[prop] : null;
+            },
+            set: function (target, prop, receiver) {
+                if (that.ref.fields[prop] !== undefined) {
+                    that.ref.fields[prop].value = receiver;
+                }
+                else {
+                    that[prop] = receiver;
+                }
+
+                return true;
+            }
+        });
+    };
 };
 
 EBXPointer.TYPES = {
