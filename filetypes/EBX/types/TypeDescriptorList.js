@@ -23,6 +23,10 @@ class TypeDescriptorList {
         return this._types.find((type) => { return type.typeInfoGuid === guid; });
     };
 
+    getTypeByClassGuid(guid) {
+        return this._types.find((type) => { return type.classGuid === guid; });
+    };
+
     getTypeByIndex(index) {
         return this._types[index];
     };
