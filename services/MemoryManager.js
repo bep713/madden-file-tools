@@ -4,6 +4,7 @@ class MemoryManager {
     constructor(processName) {
         this._process = {};
         this._processName = processName;
+        this._memoryJs = memoryjs;
     };
 
     attach(attachSettings) {
@@ -86,7 +87,8 @@ class MemoryManager {
         this._throwIfNotAttached();
 
         return new Promise((resolve, reject) => {
-            memoryjs.findPattern(this._process.handle, this._processName, pattern, memoryjs.NORMAL, 0, 0, (err, offset) => {
+            console.log(this._process.handle, this._processName, pattern);
+            memoryjs.findPattern(this._process.handle, this._processName, pattern, memoryjs.NORMAL, 0, (err, offset) => {
                 if (err) {
                     reject(err);
                 }

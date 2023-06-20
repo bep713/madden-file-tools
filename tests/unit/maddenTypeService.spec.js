@@ -15,16 +15,22 @@ describe('Madden type service unit tests', () => {
         maddenTypeService.loadTypesFromFile(M22_TYPES_PATH);
     });
 
-    // describe('can load types (requires the game process running)', () => {
-    //     before(async function () {
-    //         this.timeout(10000);
-    //         typeMapping = await maddenTypeService.parseTypes('Madden21.exe');
-    //     });
+    describe('can load types (requires the game process running)', () => {
+        before(async function () {
+            this.timeout(10000);
+            typeMapping = await maddenTypeService.parseTypes('Madden23.exe');
+        });
     
-    //     it('returns expected number of types', () => {
-    //         expect(typeMapping.length).to.eql(21123);
-    //     });
-    // });
+        it('returns expected number of types', () => {
+            expect(typeMapping.length).to.eql(21123);
+        });
+
+        it('blocking', () => {
+            const blocking = typeMapping.find(type => type.type.name === 'blocking');
+            console.log(blocking);
+            expect(blocking.type.fields.length).to.be.greaterThan(1);
+        });
+    });
 
     describe('can load types from a file', () => {
         it('method exists', () => {

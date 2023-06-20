@@ -7,8 +7,8 @@ const through2 = require('through2');
 const CASLegacyParser = require('../../streams/CASLegacyParser');
 const CompressedLegacyFileReader = require('../../streams/CompressedLegacyFileReader');
 
-const casIndex = '06';
-const testCasPath = 'D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_' + casIndex + '.cas';
+const casIndex = '04';
+const testCasPath = 'D:\\Origin\\Madden NFL 23\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_' + casIndex + '.cas';
 const expectedCompressedFile = fs.readFileSync(path.join(__dirname, '../data/CASLegacyParser/compressed.cas'));
 
 let legacyParser, emittedStreams = [];
@@ -29,7 +29,7 @@ describe('CAS Legacy Parser e2e performance test', () => {
         legacyParser.on('compressed-data', (data) => {
             const casHexIndex = data.startIndex.toString(16);
             const compressionType = data.compressionType;
-            const fileName = 'D:\\GameRips\\Madden 22\\LegacyDump_10_16_21\\00\\' + casIndex + '_' + casHexIndex;
+            const fileName = 'D:\\GameRips\\Madden 23\\LegacyDump_8_12_22\\00\\' + casIndex + '_' + casHexIndex;
             let fileExtension = '';
 
             const fileExtensionDetector = through2(function(chunk, enc, cb) {

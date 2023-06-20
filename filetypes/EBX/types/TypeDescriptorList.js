@@ -3,6 +3,7 @@ class TypeDescriptorList {
         this[Symbol.toStringTag] = 'TypeDescriptorList';
         
         this._types = [];
+        this._classGuids = [];
         this._typeHashTableLookup = {};
     };
 
@@ -37,6 +38,10 @@ class TypeDescriptorList {
 
     get types() {
         return this._types;
+    };
+
+    get classGuids() {
+        return this._classGuids;
     };
 };
 

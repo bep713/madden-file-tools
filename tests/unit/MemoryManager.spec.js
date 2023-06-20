@@ -103,7 +103,7 @@ describe('memory manager unit tests', () => {
             await manager.attach();
             let address = await manager.findPatternOffset('01');
 
-            expect(address).to.equal(0x7FF7EA130004);
+            expect(address).to.equal(0x7FF7CC940004);
         });
 
         // it('can enter a pattern offset to find the next match', async () => {

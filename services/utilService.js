@@ -344,6 +344,19 @@ utilService.parseGuid = function (buf) {
   return `${parsedBuf[0].toString('hex')}-${parsedBuf[1].toString('hex')}-${parsedBuf[2].toString('hex')}-${parsedBuf[3].toString('hex')}-${parsedBuf[4].toString('hex')}`;
 };
 
+utilService.guidStringToBuf = function (guidStr) {
+  let guidBufferParts = [];
+  const guidStrParts = guidStr.split('-');
+
+  guidBufferParts.push(Buffer.from(guidStrParts[0], 'hex').swap32());
+  guidBufferParts.push(Buffer.from(guidStrParts[1], 'hex').swap16());
+  guidBufferParts.push(Buffer.from(guidStrParts[2], 'hex').swap16());
+  guidBufferParts.push(Buffer.from(guidStrParts[3], 'hex'));
+  guidBufferParts.push(Buffer.from(guidStrParts[4], 'hex'));
+
+  return Buffer.concat(guidBufferParts);
+};
+
 utilService.flattenObject = (obj) => {
   const flattened = {}
 

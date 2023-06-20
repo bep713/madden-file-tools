@@ -24,15 +24,13 @@
   "_spec": "madden-file-tools",
   "_where": "C:\\Projects\\madden-franchise-editor",
   "author": "",
-  "bundleDependencies": false,
   "dependencies": {
     "@fstnetwork/cppzst": "^2.0.8",
     "bit-buffer": "^0.2.5",
-    "cppzst": "^2.0.7",
     "crc-32": "^1.2.0",
     "leb": "^0.3.0",
     "lz4": "^0.6.5",
-    "memoryjs": "^3.4.0",
+    "memoryjs": "^3.5.1",
     "stream-parser": "^0.3.1"
   },
   "deprecated": false,
@@ -55,5 +53,5 @@
     "type": "git",
     "url": "https://github.com/bep713/madden-file-tools.git"
   },
-  "version": "2.6.2"
+  "version": "2.7.0"
 }

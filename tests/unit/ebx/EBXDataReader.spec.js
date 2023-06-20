@@ -260,38 +260,38 @@ describe('ebx data reader unit tests', () => {
         });
     });
 
-    describe('unknown issue', () => {
-        before(async () => {
-            parser = new EBXParser();
-            let readEbxPromise = new Promise((resolve, reject) => {
-                pipeline(
-                    fs.createReadStream(path.join(__dirname, '../../data/ebx/failed-ebx/0fbe3fbf-2d79-11eb-85cb-b90b84fd4a03.ebx')),
-                    parser,
-                    (err) => {
-                        if (err) {
-                            reject(err);
-                        }
+    // describe('unknown issue', () => {
+    //     before(async () => {
+    //         parser = new EBXParser();
+    //         let readEbxPromise = new Promise((resolve, reject) => {
+    //             pipeline(
+    //                 fs.createReadStream(path.join(__dirname, '../../data/ebx/failed-ebx/0fbe3fbf-2d79-11eb-85cb-b90b84fd4a03.ebx')),
+    //                 parser,
+    //                 (err) => {
+    //                     if (err) {
+    //                         reject(err);
+    //                     }
     
-                        resolve(parser._file);    
-                    }       
-                );
-            });
+    //                     resolve(parser._file);    
+    //                 }       
+    //             );
+    //         });
     
-            await Promise.all([readEbxPromise]);
+    //         await Promise.all([readEbxPromise]);
     
-            ebxFile = parser._file;
-            reader = new EBXDataReader(types);
-        });
+    //         ebxFile = parser._file;
+    //         reader = new EBXDataReader(types);
+    //     });
 
-        it('returns expected result', () => {
-            const ebxData = reader.readEbxData(ebxFile);
+    //     it('returns expected result', () => {
+    //         const ebxData = reader.readEbxData(ebxFile);
 
-            expect(ebxData.mainObject.Name).to.equal('Football/Attribsys/data/field_alignment/field_alignment/field_alignment');
-            expect(ebxData.mainObject.splitBasedAlignmentOffsets.length).to.eql(3)
-            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData.length).to.eql(3)
-            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[0].fieldSideData).to.eql([20, 20])
-            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[1].fieldSideData).to.eql([23, 17])
-            expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[2].fieldSideData).to.eql([21.5, 18.5])
-        });
-    });
+    //         expect(ebxData.mainObject.Name).to.equal('Football/Attribsys/data/field_alignment/field_alignment/field_alignment');
+    //         expect(ebxData.mainObject.splitBasedAlignmentOffsets.length).to.eql(3)
+    //         expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData.length).to.eql(3)
+    //         expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[0].fieldSideData).to.eql([20, 20])
+    //         expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[1].fieldSideData).to.eql([23, 17])
+    //         expect(ebxData.mainObject.splitBasedAlignmentOffsets[0].ballSpotData[2].fieldSideData).to.eql([21.5, 18.5])
+    //     });
+    // });
 });

@@ -41,7 +41,7 @@ describe('CAS Block Parser unit tests', () => {
     });
 
     it('emits an event for each CAS chunk parsed', () => {
-        expect(chunks.length).to.equal(47437);
+        expect(chunks.length).to.equal(50389);
     });
 
     it('chunk contains expected data', () => {

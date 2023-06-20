@@ -12,6 +12,7 @@ class Type {
         this._typeInfoGuid = typeInfoGuid;
         this._index = index;
         this._name = '';
+        this._isInPatch = false;
     };
 
     addField(field) {
@@ -101,6 +102,14 @@ class Type {
 
     set name(name) {
         this._name = name;
+    };
+
+    get isInPatch() {
+        return this._isInPatch;
+    };
+
+    set isInPatch(patch) {
+        this._isInPatch = patch;
     };
 };
 

@@ -2,6 +2,14 @@ const { expect } = require('chai');
 const utilService = require('../../services/utilService');
 
 describe('util service unit tests', () => {
+    it('can write guids to a buffer', () => {
+        const bytes = utilService.guidStringToBuf('880ADF28-EF94-E815-6832-04372343FF58');
+        expect(bytes.readUInt32BE(0)).to.equal(0x28DF0A88);
+        expect(bytes.readUInt32BE(4)).to.equal(0x94EF15E8);
+        expect(bytes.readUInt32BE(8)).to.equal(0x68320437);
+        expect(bytes.readUInt32BE(12)).to.equal(0x2343FF58);
+    });
+
     describe('can get text from six bit character compression', () => {
         it('function exists', () => {
             expect(utilService.getUncompressedTextFromSixBitCompression).to.exist;
