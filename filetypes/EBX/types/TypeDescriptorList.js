@@ -43,6 +43,10 @@ class TypeDescriptorList {
     get classGuids() {
         return this._classGuids;
     };
+
+    set classGuids(guids) {
+        this._classGuids = guids;
+    };
 };
 
 module.exports = TypeDescriptorList;
