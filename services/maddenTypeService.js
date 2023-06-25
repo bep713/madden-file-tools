@@ -7,7 +7,7 @@ maddenTypeService.parseTypes = async (processName) => {
     const processObj = await openProcess(processName);
     maddenTypeService.processObj = processObj;
 
-    const typeInfoSig = await findPattern(processObj.handle, processName, '48 39 1D ? ? ? ? 75 18 48 8b 43 10', memoryjs.NORMAL, 0, 0);
+    const typeInfoSig = await findPattern(processObj.handle, processName, '48 39 1D ? ? ? ? ? ? 48 8b 43 10', memoryjs.NORMAL, 0, 0);
     const typeInfoOffset = await readMemory(processObj.handle, typeInfoSig + 3, memoryjs.UINT32);
     const typeInfoStartAddress = await readMemory(processObj.handle, typeInfoSig + 7 + typeInfoOffset, memoryjs.UINT64);
     
