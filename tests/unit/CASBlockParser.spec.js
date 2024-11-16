@@ -5,7 +5,7 @@ const { pipeline } = require('stream');
 const CASBlockParser = require('../../streams/CASBlockParser');
 
 // This uses an external CAS file to test. Comment out if you don't have this file :)
-const CAS_FILE_PATH = 'D:\\Games\\Madden NFL 22\\Data\\Win32\\superbundlelayout\\madden_installpackage_00\\cas_01.cas';
+const CAS_FILE_PATH = 'E:\\Games\\Madden\\Madden NFL 25\\Data\\Win32\\superbundlelayout\\football_installpackage_00\\cas_01.cas';
 
 let parser;
 

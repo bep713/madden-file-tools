@@ -1,9 +1,11 @@
 const memoryjs = require('memoryjs');
 
 let maddenTypeService = {};
+maddenTypeService.processName = '';
 maddenTypeService.processObj = {};
 
 maddenTypeService.parseTypes = async (processName) => {
+    maddenTypeService.processName = processName;
     const processObj = await openProcess(processName);
     maddenTypeService.processObj = processObj;
 
@@ -58,7 +60,8 @@ maddenTypeService.parseType = async (offset) => {
             shouldReadFields = true;
             break;
         case 8:
-            fieldOffsetPosition = await readMemory(maddenTypeService.processObj.handle, offset + 56, memoryjs.UINT64);
+            const readPos = maddenTypeService.processName === 'Madden25.exe' ? offset + 64 : offset + 56;
+            fieldOffsetPosition = await readMemory(maddenTypeService.processObj.handle, readPos, memoryjs.UINT64);
 
             if (fieldOffsetPosition !== 0) {
                 shouldReadFields = true;
@@ -72,8 +75,9 @@ maddenTypeService.parseType = async (offset) => {
     let fields = [];
 
     if (shouldReadFields) {
+        const fieldLength = maddenTypeService.processName === 'Madden25.exe' ? 32 : 24;
         for (let i = 0; i < fieldCount; i++) {
-            const field = await maddenTypeService.parseField(fieldOffsetPosition + (i * 24));
+            const field = await maddenTypeService.parseField(fieldOffsetPosition + (i * fieldLength));
             fields.push(field);
         }
     }

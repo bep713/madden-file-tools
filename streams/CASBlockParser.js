@@ -4,19 +4,32 @@ class CASBlockParser extends FileParser {
     constructor() {
         super();
         
-        this._onChunkStart();
+        this._checkForChunkStart();
     };
 
-    _onChunkStart() {
+    _checkForChunkStart(startingBuf = Buffer.alloc(0)) {
+        if (startingBuf && startingBuf.length === 8) {
+            const firstWord = startingBuf.readUInt32BE(0);
+            const secondWord = startingBuf.readUInt32BE(4);
+
+            if (firstWord > 0xFF || (startingBuf[5] === 0x70 && secondWord === 0xB3EDF05D || secondWord == 0x5DF0EDB3 || secondWord == 0xD68E799D)) {
+                this._onChunkStart(startingBuf);
+            }
+        }
+
+        this.bytes(1, (buf) => {
+            this._checkForChunkStart(Buffer.concat([startingBuf, buf]));
+        });
+    }
+
+    _onChunkStart(startingBuf) {
         let chunk = {
             blocks: [],
             sizeInCas: 0,
             offset: this.currentBufferIndex
         };
 
-        this.bytes(8, (buf) => {
-            this._onBlockStart(buf, chunk);
-        });
+        this._onBlockStart(startingBuf, chunk);
     };
 
     _onBlockStart(buf, chunk) {
