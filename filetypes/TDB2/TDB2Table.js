@@ -6,9 +6,12 @@ class TDB2Table {
         this._name = '';
         this._offset = 0;
         this._unknown1 = 0;
+        this._unknown2 = 0;
         this._records = [];
         this._rawKey = null;
         this._numEntriesRaw = null;
+        this._isSubTable = false;
+        this._parentInfo = null;
     };
 
     get name() {
@@ -43,6 +46,14 @@ class TDB2Table {
         this._unknown1 = unk1;
     };
 
+    get unknown2() {
+        return this._unknown2;
+    };
+
+    set unknown2(unk2) {
+        this._unknown2 = unk2;
+    };
+
     get numEntriesRaw() {
         return this._numEntriesRaw;
     };
@@ -70,6 +81,22 @@ class TDB2Table {
     set rawKey(rawKey) {
         this._rawKey = rawKey;
     };
+
+    get isSubTable() {
+        return this._isSubTable;
+    }
+
+    set isSubTable(isSubTable) {
+        this._isSubTable = isSubTable;
+    }
+
+    get parentInfo() {
+        return this._parentInfo;
+    }
+
+    set parentInfo(parentInfo) {
+        this._parentInfo = parentInfo;
+    }
 
     get fieldDefinitions() {
         if (this._records.length > 0) {

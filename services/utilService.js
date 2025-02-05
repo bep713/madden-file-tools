@@ -277,6 +277,87 @@ utilService.readModifiedLebCompressedInteger = function (buf) {
   return value;
 };
 
+utilService.parseModifiedLebEncodedNumber = function (parser)
+{
+    let byteArray = [];
+    let currentByte;
+
+    do
+    {
+        currentByte = parser.readByte().readUInt8(0);
+        byteArray.push(currentByte);
+    }
+    while((currentByte & 0x80));
+    
+    let value = 0;
+    let isNegative = false;
+
+    const buf = Buffer.from(byteArray);
+
+    for (let i = (buf.length - 1); i >= 0; i--) {
+        let currentByte = buf.readUInt8(i);
+
+        if (i !== (buf.length - 1)) {
+        currentByte = currentByte ^ 0x80;
+        }
+
+        if (i === 0 && (currentByte & 0x40) === 0x40) {
+        currentByte = currentByte ^ 0x40;
+        isNegative = true;
+        }
+
+        let multiplicationFactor = 1 << (i * 6);
+
+        if (i > 1) {
+        multiplicationFactor = multiplicationFactor << 1;
+        }
+
+        value += currentByte * multiplicationFactor;
+
+        if (isNegative) {
+        value *= -1;
+        }
+    }
+
+    return value;
+};
+
+// Function to convert a character to a 6-bit value
+utilService.charTo6Bit = function (c) {
+  // Map A-Z to 0-25, 0-9 to 26-35
+  if (c >= 'A' && c <= 'Z') 
+  {
+      return (c.charCodeAt(0) - 32);
+  }
+  else if (c >= '0' && c <= '9') 
+  {
+      return c.charCodeAt(0) - 32;
+  }
+  throw new Error("Unsupported character: " + c);
+};
+
+utilService.compress6BitString = function (str) 
+{
+    if (str.length !== 4) 
+    {
+        throw new Error("Input string must be exactly 4 characters");
+    }
+
+    // Convert each character to 6-bit value
+    let bits = [];
+    for (let i = 0; i < 4; i++) 
+    {
+        bits.push(utilService.charTo6Bit(str[i]));
+    }
+
+    // Pack the 6-bit values into 3 bytes
+    let byte1 = (bits[0] << 2) | (bits[1] >> 4);
+    let byte2 = ((bits[1] & 0xF) << 4) | (bits[2] >> 2);
+    let byte3 = ((bits[2] & 0x3) << 6) | bits[3];
+
+    return [byte1, byte2, byte3];
+};
+
 utilService.writeModifiedLebCompressedInteger = function (value) {
   const isNegative = value < 0;
   value = Math.abs(value);

@@ -31,6 +31,7 @@
     "leb": "^0.3.0",
     "lz4": "^0.6.5",
     "memoryjs": "^3.4.0",
+    "stream": "^0.0.3",
     "stream-parser": "^0.3.1"
   },
   "deprecated": false,
