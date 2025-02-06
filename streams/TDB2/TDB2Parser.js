@@ -98,8 +98,6 @@ class TDB2Parser extends FileParser {
 
         console.log(`Reading field ${field.key} of type ${field.type} at index 0x${recordParser.offset.toString(16)}`);
 
-        //console.log(this._currentBufferIndex.toString(16));
-
         switch (field.type) {
             case FIELD_TYPE_INT:
                 field.raw = utilService.writeModifiedLebCompressedInteger(utilService.parseModifiedLebEncodedNumber(recordParser));
@@ -157,8 +155,6 @@ class TDB2Parser extends FileParser {
                 field.type = field.rawKey.slice(3).readUInt8(0);
 
                 console.log(`Reading field ${field.key} of type ${field.type} at index 0x${recordParser.offset.toString(16)}`);
-
-                //console.log(this._currentBufferIndex.toString(16));
 
                 switch (field.type) {
                     case FIELD_TYPE_INT:
@@ -263,14 +259,13 @@ class TDB2Parser extends FileParser {
             field.key = utilService.getUncompressedTextFromSixBitCompression(tableKeyBuf.slice(0, 3));
             field.type = tableKeyBuf.readUInt8(3);
 
-            //console.log(this._currentBufferIndex.toString(16));
-
             switch (field.type) {
                 case FIELD_TYPE_INT:
                     return this._readLebNumber(tableKeyBuf.slice(4), (fieldBuffer) => {
                         field.raw = fieldBuffer;
                         record.fields[field.key] = field;
 
+                        // UNWI has an extra zero for some reason
                         if(field.key === 'UNWI')
                         {
                             this.bytes(0x1, (buf) => {

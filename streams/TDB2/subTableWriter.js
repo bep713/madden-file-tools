@@ -10,7 +10,7 @@ function write(table)
 {
 	let buffers = [];
 	
-	// Iterate through each record in the table
+	// Iterate through each record in the subtable
 	for(let record of table.records)
 	{
 		// If the table is a visuals table, write the record index
@@ -31,7 +31,7 @@ function write(table)
 			}
 			else
 			{
-				// Write the field raw data
+				// Write the field raw data, including string length for string fields
 				if(field.type === FIELD_TYPE_STRING)
 				{
 					buffers.push(utilService.writeModifiedLebCompressedInteger(field.length));
@@ -40,10 +40,10 @@ function write(table)
 			}
 		}
 
+		// Write the record terminator
 		buffers.push(Buffer.from([0x00]));
 	}
 
-	//console.log(buffers);
 	return Buffer.concat(buffers);
 }
 

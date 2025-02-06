@@ -10,28 +10,33 @@ class TDB2Writer extends Readable {
 
         tdb2File.tables.forEach((table) => {
             this.push(table.rawKey);
+            // Push data storage type for keyed record tables (type 5)
             if(table.type === 5) {
                 this.push(Buffer.from([table.unknown2]));
             }
             this.push(table.numEntriesRaw);
 
             table.records.forEach((record) => {
-                // Write the record index for visuals table (type 5)
+                // Write the record index for keyed record tables (type 5)
                 if(table.type === 5)
                 {
                     this.push(utilService.writeModifiedLebCompressedInteger(record.index));
                 }
                 
+                // If the table is not a compressed record storage table, write the record data normally
                 if(table.unknown2 !== 0x2)
                 {
                     Object.keys(record.fields).map((fieldKey) => {
                         const field = record.fields[fieldKey];
+                        // Write the field key
                         this.push(field.rawKey);
 
+                        // Write the string length for string fields
                         if (field.type === 1) {
                             this.push(utilService.writeModifiedLebCompressedInteger(field.length));
                         }
 
+                        // If it's not a subtable, just push the raw field data, otherwise, push the subtable data and write the subtable
                         if(field.type !== 4)
                         {
                             this.push(field.raw);
@@ -46,12 +51,12 @@ class TDB2Writer extends Readable {
                     
                     this.push(Buffer.from([0x00]));
                 }
-                else
+                else // Otherwise, write the record data separately and compress it before writing
                 {
                     const decompressedBufs = [];
 
+                    // Write the decompressed record header
                     decompressedBufs.push(Buffer.from(utilService.compress6BitString("CHVI")));
-
                     decompressedBufs.push(Buffer.from([0x03]));
 
                     Object.keys(record.fields).map((fieldKey) => {
@@ -76,8 +81,10 @@ class TDB2Writer extends Readable {
                     
                     decompressedBufs.push(Buffer.from([0x00]));
 
+                    // Gzip compress the record data
                     const compressedBuf = zlib.gzipSync(Buffer.concat(decompressedBufs));
 
+                    // Write the compressed record length and data
                     this.push(utilService.writeModifiedLebCompressedInteger(compressedBuf.length));
                     this.push(compressedBuf);
                 }
