@@ -1,7 +1,7 @@
-const m24Path = 'data/M24_ROSTER-Official';
-const m25Path = 'data/M25_ROSTER-Official';
+const m24Path = '../data/M24_ROSTER-Official';
+const m25Path = '../data/M25_ROSTER-Official';
 
-const MaddenRosterHelper = require('../helpers/MaddenRosterHelper');
+const MaddenRosterHelper = require('../../helpers/MaddenRosterHelper');
 let done = false;
 
 changeKeyedRecordData(m24Path, m25Path)
