@@ -225,23 +225,6 @@ class TDB2Parser extends FileParser {
                 return true;
             }
         }));
-
-        // Iterate through the fields and add to the table's field definitions if they don't already exist
-        /*console.log("made it here " + table.name);
-        for (let key in record.fields) {
-            const field = record.fields[key];
-            if (!table.fieldDefinitions.find((f) => f.key === field.key)) {
-                const newFieldDef = {
-                    'name': field.key,
-                    'type': field.type,
-                    'offset': -1,
-                    'bits': -1,
-                    'maxValue': -1
-                }
-
-                table.fieldDefinitions.push(newFieldDef);
-            }
-        }*/
     };
 
 
@@ -404,7 +387,7 @@ class TDB2Parser extends FileParser {
                     }
 
                     // It's not really changed since this is being done while reading
-                    //newField.isChanged = false;
+                    newField.isChanged = false;
                     
                     record.fields[fieldDef.name] = newField;
                 }
