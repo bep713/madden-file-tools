@@ -49,9 +49,9 @@ async function changeKeyedRecordData(m24Path, m25Path) {
             // Change the item asset name to a white arm sleeve
             armSleeve.fields['ITAN'].value = "GearArmSleeve_Full_sleeveLongUnderarmor_normal_White";
 
-            m24Helper.save("data/WriteTest_M24_ROSTER-Official")
+            m24Helper.save("../data/WriteTest_M24_ROSTER-Official")
                 .then(() => {
-                    console.log("Completed M24 CVPM test. Saved file to data/WriteTest_M24_ROSTER-Official");
+                    console.log("Completed M24 CVPM test. Saved file to ../data/WriteTest_M24_ROSTER-Official");
                     return true;
                 });
         });
@@ -82,9 +82,9 @@ async function changeKeyedRecordData(m24Path, m25Path) {
             // Change the item asset name to a white arm sleeve
             armSleeve.fields['ITAN'].value = "GearArmSleeve_Full_sleeveLongUnderarmor_normal_White";
 
-            m25Helper.save("data/WriteTest_M25_ROSTER-Official")
+            m25Helper.save("../data/WriteTest_M25_ROSTER-Official")
                 .then(() => {
-                    console.log("Completed M25 PLEX test. Saved file to data/WriteTest_M25_ROSTER-Official");
+                    console.log("Completed M25 PLEX test. Saved file to ../data/WriteTest_M25_ROSTER-Official");
                     return true;
                 });
         });
