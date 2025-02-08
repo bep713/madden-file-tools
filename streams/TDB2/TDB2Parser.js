@@ -76,27 +76,22 @@ class TDB2Parser extends FileParser {
     _onTableRecordStart(table) {
         let record = new TDB2Record();
         record.index = table.type === 5 ? this._getLebRecordKey(record, table) : table.records.length;
-
         if(table.type !== 5)
             this._onTableFieldStart(record, table);
     };
 
     _onCompressedTableFieldStart(compressedRecordBuf, record, table, existingParser) {
-        const decompressedRecordBuf = !existingParser ? zlib.gunzipSync(compressedRecordBuf) : null;
+        const recordParser = new SimpleParser(zlib.gunzipSync(compressedRecordBuf));
+        recordParser.readBytes(4); // Skip the header bytes
+        this._onDecompressedTableFieldStart(recordParser, record, table);
+    };
 
-        const recordParser = existingParser ? existingParser : new SimpleParser(decompressedRecordBuf);
-
-        if(!existingParser)
-        {
-            recordParser.readBytes(4); // Skip the header bytes
-        }
-            
+    _onDecompressedTableFieldStart(recordParser, record, table)
+    {
         let field = new TDB2Field();
         field.rawKey = recordParser.readBytes(4);
         field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
         field.type = field.rawKey.slice(3).readUInt8(0);
-
-        console.log(`Reading field ${field.key} of type ${field.type} at index 0x${recordParser.offset.toString(16)}`);
 
         switch (field.type) {
             case FIELD_TYPE_INT:
@@ -119,6 +114,7 @@ class TDB2Parser extends FileParser {
                 record.fields[field.key] = field;
                 return this._checkCompressedTableRecordEnd(record, table, recordParser);
             case FIELD_TYPE_SUBTABLE:
+                // Read subtable header information
                 field.value = new TDB2Table();
                 field.value.offset = recordParser.offset - 4;
                 field.value.rawKey = field.rawKey;
@@ -128,6 +124,8 @@ class TDB2Parser extends FileParser {
                 field.value.numEntriesRaw = utilService.writeModifiedLebCompressedInteger(utilService.parseModifiedLebEncodedNumber(recordParser));
                 field.value.isSubTable = true;
                 field.value.parentInfo = { parentRecord: record, parentField: field, parentTable: table };
+
+                // Read subtable records
                 this._readCompressedRecordSubTable(field.value, recordParser);
                 record.fields[field.key] = field;
                 return this._checkCompressedTableRecordEnd(record, table, recordParser);
@@ -146,7 +144,6 @@ class TDB2Parser extends FileParser {
         {
             let record = new TDB2Record();
             record.index = i;
-            console.log(`Reading subtable ${table.name} record ${i}`);
             while(recordParser.buffer.readUInt8(recordParser.offset) !== 0x0)
             {
                 let field = new TDB2Field();
@@ -154,17 +151,10 @@ class TDB2Parser extends FileParser {
                 field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
                 field.type = field.rawKey.slice(3).readUInt8(0);
 
-                console.log(`Reading field ${field.key} of type ${field.type} at index 0x${recordParser.offset.toString(16)}`);
-
                 switch (field.type) {
                     case FIELD_TYPE_INT:
                         field.raw = utilService.writeModifiedLebCompressedInteger(utilService.parseModifiedLebEncodedNumber(recordParser));
                         record.fields[field.key] = field;
-                        if(field.key === 'UNWI')
-                        {
-                            field.raw = Buffer.concat([field.raw, recordParser.readBytes(1)]);
-                            record.fields[field.key] = field;
-                        }
                         break;
                     case FIELD_TYPE_STRING:
                         const strLen = utilService.parseModifiedLebEncodedNumber(recordParser);
@@ -198,21 +188,7 @@ class TDB2Parser extends FileParser {
                 }
             }
 
-            table.records.push(new Proxy(record, {
-                get: function (target, prop, receiver) {
-                    return record.fields[prop] !== undefined ? record.fields[prop].value : record[prop] !== undefined ? record[prop] : null;
-                },
-                set: function (target, prop, receiver) {
-                    if (record.fields[prop] !== undefined) {
-                        record.fields[prop].value = receiver;
-                    }
-                    else {
-                        record[prop] = receiver;
-                    }
-
-                    return true;
-                }
-            }));
+            this._pushTableRecord(record, table);
 
             recordParser.readBytes(1);
         }
@@ -221,30 +197,35 @@ class TDB2Parser extends FileParser {
     _checkCompressedTableRecordEnd(record, table, recordParser)
     {
         if (recordParser.buffer.readUInt8(recordParser.offset) === 0x0) {
-            table.records.push(new Proxy(record, {
-                get: function (target, prop, receiver) {
-                    return record.fields[prop] !== undefined ? record.fields[prop].value : record[prop] !== undefined ? record[prop] : null;
-                },
-                set: function (target, prop, receiver) {
-                    if (record.fields[prop] !== undefined) {
-                        record.fields[prop].value = receiver;
-                    }
-                    else {
-                        record[prop] = receiver;
-                    }
-
-                    return true;
-                }
-            }));
+            this._pushTableRecord(record, table);
 
             recordParser.readBytes(1);
 
             this._checkTableEnd(table);
         }
         else {
-            this._onCompressedTableFieldStart(null, record, table, recordParser);
+            this._onDecompressedTableFieldStart(recordParser, record, table);
         }
     }
+
+    _pushTableRecord(record, table)
+    {
+        table.records.push(new Proxy(record, {
+            get: function (target, prop, receiver) {
+                return record.fields[prop] !== undefined ? record.fields[prop].value : record[prop] !== undefined ? record[prop] : null;
+            },
+            set: function (target, prop, receiver) {
+                if (record.fields[prop] !== undefined) {
+                    record.fields[prop].value = receiver;
+                }
+                else {
+                    record[prop] = receiver;
+                }
+
+                return true;
+            }
+        }));
+    };
 
 
     _onTableFieldStart(record, table, startTableBuf) {
@@ -346,21 +327,7 @@ class TDB2Parser extends FileParser {
     _checkTableRecordEnd(record, table) {
         this.bytes(0x1, (buf) => {
             if (buf.readUInt8(0) === 0x0) {
-                table.records.push(new Proxy(record, {
-                    get: function (target, prop, receiver) {
-                        return record.fields[prop] !== undefined ? record.fields[prop].value : record[prop] !== undefined ? record[prop] : null;
-                    },
-                    set: function (target, prop, receiver) {
-                        if (record.fields[prop] !== undefined) {
-                            record.fields[prop].value = receiver;
-                        }
-                        else {
-                            record[prop] = receiver;
-                        }
-
-                        return true;
-                    }
-                }));
+                this._pushTableRecord(record, table);
 
                 this._checkTableEnd(table);
             }
