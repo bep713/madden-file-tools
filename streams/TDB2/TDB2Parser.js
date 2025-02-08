@@ -225,6 +225,23 @@ class TDB2Parser extends FileParser {
                 return true;
             }
         }));
+
+        // Iterate through the fields and add to the table's field definitions if they don't already exist
+        /*console.log("made it here " + table.name);
+        for (let key in record.fields) {
+            const field = record.fields[key];
+            if (!table.fieldDefinitions.find((f) => f.key === field.key)) {
+                const newFieldDef = {
+                    'name': field.key,
+                    'type': field.type,
+                    'offset': -1,
+                    'bits': -1,
+                    'maxValue': -1
+                }
+
+                table.fieldDefinitions.push(newFieldDef);
+            }
+        }*/
     };
 
 
@@ -239,6 +256,18 @@ class TDB2Parser extends FileParser {
             field.rawKey = tableKeyBuf.slice(0, 4);
             field.key = utilService.getUncompressedTextFromSixBitCompression(tableKeyBuf.slice(0, 3));
             field.type = tableKeyBuf.readUInt8(3);
+
+            if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
+                const newFieldDef = {
+                    'name': field.key,
+                    'type': field.type,
+                    'offset': -1,
+                    'bits': -1,
+                    'maxValue': -1
+                }
+
+                table.fieldDefinitions.push(newFieldDef);
+            }
 
             switch (field.type) {
                 case FIELD_TYPE_INT:
@@ -337,6 +366,52 @@ class TDB2Parser extends FileParser {
         });
     };
 
+    _normalizeRecords(table) {
+        // Iterate through the records and add any missing fields that are present in some records but not all
+        for (let i = 0; i < table.records.length; i++) {
+            const record = table.records[i];
+            for (let key in table.fieldDefinitions) {
+                const fieldDef = table.fieldDefinitions[key];
+                if (!record.fields.hasOwnProperty(fieldDef.name)) {
+                    // Skip subtables as they could become a little tricky and don't really need this right now
+                    if(fieldDef.type === FIELD_TYPE_SUBTABLE)
+                    {
+                        continue;
+                    }
+
+                    const newField = new TDB2Field();
+
+                    newField.key = fieldDef.name;
+                    newField.type = fieldDef.type;
+                    newField.rawKey = Buffer.from([...utilService.compress6BitString(fieldDef.name), fieldDef.type]);
+
+                    // Set default values for the field based on type
+                    switch (fieldDef.type) {
+                        case FIELD_TYPE_INT:
+                            newField.value = 0;
+                            break;
+                        case FIELD_TYPE_STRING:
+                            newField.value = '';
+                            break;
+                        case FIELD_TYPE_UNK:
+                            newField.raw = Buffer.from([0x0]);
+                            break;
+                        case FIELD_TYPE_FLOAT:
+                            newField.value = 0.0;
+                            break;
+                        default:
+                            console.warn(`Unsupported field type: 0x${fieldDef.type.toString(16)}`);
+                    }
+
+                    // It's not really changed since this is being done while reading
+                    //newField.isChanged = false;
+                    
+                    record.fields[fieldDef.name] = newField;
+                }
+            }
+        }
+    }
+
     _checkTableEnd(table) {
         if (table.records.length === table.numEntries) {
             if(table.isSubTable)
@@ -353,6 +428,7 @@ class TDB2Parser extends FileParser {
             }
             else
             {
+                this._normalizeRecords(table);
                 this.file.addTable(table);
                 this.bytes(0x5, this._onTableStart);
             }

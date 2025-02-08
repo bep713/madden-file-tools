@@ -12,6 +12,7 @@ class TDB2Table {
         this._numEntriesRaw = null;
         this._isSubTable = false;
         this._parentInfo = null;
+        this._fieldDefinitions = [];
     };
 
     get name() {
@@ -99,19 +100,11 @@ class TDB2Table {
     }
 
     get fieldDefinitions() {
-        if (this._records.length > 0) {
-            return Object.keys(this._records[0].fields).map((fieldKey) => {
-                const field = this._records[0].fields[fieldKey];
+        return this._fieldDefinitions;
+    };
 
-                return {
-                    'name': field.name,
-                    'type': field.type,
-                    'offset': -1,
-                    'bits': -1,
-                    'maxValue': -1
-                }
-            })
-        }
+    set fieldDefinitions(fieldDefinitions) {
+        this._fieldDefinitions = fieldDefinitions;
     };
 };
 
