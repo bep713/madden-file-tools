@@ -110,7 +110,9 @@ class TDB2Parser extends FileParser {
                 record.fields[field.key] = field;
                 return this._checkCompressedTableRecordEnd(record, table, recordParser);
             case FIELD_TYPE_UNK:
-                field.raw = recordParser.readBytes(1);
+                // M25 rosters decided to be weird, sometimes they have a 0 byte after this type byte, other times they don't.
+                // This field type generally never appears at the end of a record, so checking this way shouldn't cause any issues
+                field.raw = recordParser.buffer[recordParser.offset] === 0 ? recordParser.readBytes(1) : Buffer.alloc(0);
                 record.fields[field.key] = field;
                 return this._checkCompressedTableRecordEnd(record, table, recordParser);
             case FIELD_TYPE_SUBTABLE:
