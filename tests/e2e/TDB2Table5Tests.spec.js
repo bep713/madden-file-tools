@@ -1,8 +1,8 @@
 const MaddenRosterHelper = require('../../helpers/MaddenRosterHelper');
 const expect = require('chai').expect;
 
-const m24Path = 'tests/data/M24_ROSTER-Official';
-const m25Path = 'tests/data/M25_ROSTER-Official';
+const m24Path = '../data/M24_ROSTER-Official';
+const m25Path = '../data/M25_ROSTER-Official';
 
 it('M24 Helper test', () => {
     const m24Helper = new MaddenRosterHelper();
