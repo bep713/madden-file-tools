@@ -10,9 +10,14 @@ class TDB2Writer extends Readable {
 
         tdb2File.tables.forEach((table) => {
             this.push(table.rawKey);
-            // Push data storage type for keyed record tables (type 5)
+            
             if(table.type === 5) {
+                // Push data storage type for keyed record tables (type 5)
                 this.push(Buffer.from([table.unknown2]));
+
+                // Sort the table's records by index (necessary for keyed search to work properly)
+                table.records.sort((a, b) => a.index - b.index);
+                
             }
             this.push(table.numEntriesRaw);
 
