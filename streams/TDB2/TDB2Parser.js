@@ -93,6 +93,18 @@ class TDB2Parser extends FileParser {
         field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
         field.type = field.rawKey.slice(3).readUInt8(0);
 
+        if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
+            const newFieldDef = {
+                'name': field.key,
+                'type': field.type,
+                'offset': -1,
+                'bits': -1,
+                'maxValue': -1
+            }
+
+            table.fieldDefinitions.push(newFieldDef);
+        }
+
         switch (field.type) {
             case FIELD_TYPE_INT:
                 field.raw = utilService.writeModifiedLebCompressedInteger(utilService.parseModifiedLebEncodedNumber(recordParser));
@@ -152,6 +164,18 @@ class TDB2Parser extends FileParser {
                 field.rawKey = recordParser.readBytes(4);
                 field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
                 field.type = field.rawKey.slice(3).readUInt8(0);
+
+                if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
+                    const newFieldDef = {
+                        'name': field.key,
+                        'type': field.type,
+                        'offset': -1,
+                        'bits': -1,
+                        'maxValue': -1
+                    }
+    
+                    table.fieldDefinitions.push(newFieldDef);
+                }
 
                 switch (field.type) {
                     case FIELD_TYPE_INT:
