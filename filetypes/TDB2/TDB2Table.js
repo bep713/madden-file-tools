@@ -1,4 +1,6 @@
 const utilService = require('../../services/utilService');
+const TDB2Record = require('./TDB2Record');
+const lodash = require('lodash');
 
 class TDB2Table {
     constructor() {
@@ -69,6 +71,7 @@ class TDB2Table {
 
     set numEntries(num) {
         this._numEntries = num;
+        this._numEntriesRaw = utilService.writeModifiedLebCompressedInteger(num);
     };
 
     get records() {
@@ -106,6 +109,24 @@ class TDB2Table {
     set fieldDefinitions(fieldDefinitions) {
         this._fieldDefinitions = fieldDefinitions;
     };
+
+    // Adds newRecord to the table 
+    addRecord(newRecord) {
+        // If we're working with a keyed record table, we need to make sure the key doesn't exist already
+        if (this._type === 5) {
+            const newKey = newRecord.index;
+
+            if (this._records.some(record => record.index === newKey)) {
+                throw new Error('Cannot add a record to a keyed record table with a duplicate key.');
+            }
+        }
+
+        // Add the record to the array
+        this._records.push(newRecord);
+
+        // Update table's entry count
+        this.numEntries++;
+    }
 };
 
 module.exports = TDB2Table;
