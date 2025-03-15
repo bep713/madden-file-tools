@@ -93,17 +93,7 @@ class TDB2Parser extends FileParser {
         field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
         field.type = field.rawKey.slice(3).readUInt8(0);
 
-        if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
-            const newFieldDef = {
-                'name': field.key,
-                'type': field.type,
-                'offset': -1,
-                'bits': -1,
-                'maxValue': -1
-            }
-
-            table.fieldDefinitions.push(newFieldDef);
-        }
+        this._populateFieldDefinitions(table, field);
 
         switch (field.type) {
             case FIELD_TYPE_INT:
@@ -165,17 +155,7 @@ class TDB2Parser extends FileParser {
                 field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
                 field.type = field.rawKey.slice(3).readUInt8(0);
 
-                if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
-                    const newFieldDef = {
-                        'name': field.key,
-                        'type': field.type,
-                        'offset': -1,
-                        'bits': -1,
-                        'maxValue': -1
-                    }
-    
-                    table.fieldDefinitions.push(newFieldDef);
-                }
+                this._populateFieldDefinitions(table, field);
 
                 switch (field.type) {
                     case FIELD_TYPE_INT:
@@ -266,17 +246,7 @@ class TDB2Parser extends FileParser {
             field.key = utilService.getUncompressedTextFromSixBitCompression(tableKeyBuf.slice(0, 3));
             field.type = tableKeyBuf.readUInt8(3);
 
-            if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
-                const newFieldDef = {
-                    'name': field.key,
-                    'type': field.type,
-                    'offset': -1,
-                    'bits': -1,
-                    'maxValue': -1
-                }
-
-                table.fieldDefinitions.push(newFieldDef);
-            }
+            this._populateFieldDefinitions(table, field);
 
             switch (field.type) {
                 case FIELD_TYPE_INT:
@@ -374,6 +344,21 @@ class TDB2Parser extends FileParser {
             }
         });
     };
+
+    _populateFieldDefinitions(table, field)
+    {
+        if (!table.fieldDefinitions.find((f) => f.name === field.key)) {
+            const newFieldDef = {
+                'name': field.key,
+                'type': field.type,
+                'offset': -1,
+                'bits': -1,
+                'maxValue': -1
+            }
+
+            table.fieldDefinitions.push(newFieldDef);
+        }
+    }
 
     _normalizeRecords(table) {
         // Iterate through the records and add any missing fields that are present in some records but not all
