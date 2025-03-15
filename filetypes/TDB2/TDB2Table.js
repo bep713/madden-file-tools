@@ -1,4 +1,5 @@
 const utilService = require('../../services/utilService');
+const TDB2Record = require('./TDB2Record');
 
 class TDB2Table {
     constructor() {
@@ -6,9 +7,13 @@ class TDB2Table {
         this._name = '';
         this._offset = 0;
         this._unknown1 = 0;
+        this._unknown2 = 0;
         this._records = [];
         this._rawKey = null;
         this._numEntriesRaw = null;
+        this._isSubTable = false;
+        this._parentInfo = null;
+        this._fieldDefinitions = [];
     };
 
     get name() {
@@ -43,6 +48,14 @@ class TDB2Table {
         this._unknown1 = unk1;
     };
 
+    get unknown2() {
+        return this._unknown2;
+    };
+
+    set unknown2(unk2) {
+        this._unknown2 = unk2;
+    };
+
     get numEntriesRaw() {
         return this._numEntriesRaw;
     };
@@ -57,6 +70,7 @@ class TDB2Table {
 
     set numEntries(num) {
         this._numEntries = num;
+        this._numEntriesRaw = utilService.writeModifiedLebCompressedInteger(num);
     };
 
     get records() {
@@ -71,21 +85,47 @@ class TDB2Table {
         this._rawKey = rawKey;
     };
 
-    get fieldDefinitions() {
-        if (this._records.length > 0) {
-            return Object.keys(this._records[0].fields).map((fieldKey) => {
-                const field = this._records[0].fields[fieldKey];
+    get isSubTable() {
+        return this._isSubTable;
+    }
 
-                return {
-                    'name': field.name,
-                    'type': field.type,
-                    'offset': -1,
-                    'bits': -1,
-                    'maxValue': -1
-                }
-            })
-        }
+    set isSubTable(isSubTable) {
+        this._isSubTable = isSubTable;
+    }
+
+    get parentInfo() {
+        return this._parentInfo;
+    }
+
+    set parentInfo(parentInfo) {
+        this._parentInfo = parentInfo;
+    }
+
+    get fieldDefinitions() {
+        return this._fieldDefinitions;
     };
+
+    set fieldDefinitions(fieldDefinitions) {
+        this._fieldDefinitions = fieldDefinitions;
+    };
+
+    // Adds newRecord to the table 
+    addRecord(newRecord) {
+        // If we're working with a keyed record table, we need to make sure the key doesn't exist already
+        if (this._type === 5) {
+            const newKey = newRecord.index;
+
+            if (this._records.some(record => record.index === newKey)) {
+                throw new Error('Cannot add a record to a keyed record table with a duplicate key.');
+            }
+        }
+
+        // Add the record to the array
+        this._records.push(newRecord);
+
+        // Update table's entry count
+        this.numEntries++;
+    }
 };
 
 module.exports = TDB2Table;
