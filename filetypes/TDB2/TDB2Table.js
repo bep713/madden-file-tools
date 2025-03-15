@@ -1,6 +1,5 @@
 const utilService = require('../../services/utilService');
 const TDB2Record = require('./TDB2Record');
-const lodash = require('lodash');
 
 class TDB2Table {
     constructor() {
