@@ -70,6 +70,27 @@ it('M24 Added Record Test', () => {
         });
     });
 });
+
+it('M24 Removed Record Test', () => {
+    const m24Helper = new MaddenRosterHelper();
+    m24Helper.load(m24Path).then(() => {
+        const originalTableLength = m24Helper.file.CVPM.numEntries;
+
+        // Remove first record (Geno Smith - key 112)
+        m24Helper.file.CVPM.removeRecord(112);
+
+        m24Helper.save("tests/data/WriteTest_RemovedRecordM24_ROSTER-Official").then(() => {
+            const m24Helper2 = new MaddenRosterHelper();
+            m24Helper2.load("tests/data/WriteTest_RemovedRecordM24_ROSTER-Official").then(() => {
+                // Ensure the entry has been removed
+                expect(m24Helper2.file.CVPM.records.numEntries).to.equal(originalTableLength - 1);
+                expect(m24Helper2.file.CVPM.records.find((record) => {
+                    return record.index === 112;
+                })).to.equal(undefined);
+            });
+        });
+    });
+});
  
 
 it('M25 Helper test', () => {
@@ -134,6 +155,27 @@ it('M25 Added Record Test', () => {
 
                 // Ensure that the original record remains intact
                 expect(m25Helper2.file.PLEX.records[0].fields['ASNM'].value).to.equal('SmithGeno_112');
+            });
+        });
+    });
+});
+
+it('M25 Removed Record Test', () => {
+    const m25Helper = new MaddenRosterHelper();
+    m25Helper.load(m25Path).then(() => {
+        const originalTableLength = m25Helper.file.PLEX.numEntries;
+
+        // Remove first record (Geno Smith - key 112)
+        m25Helper.file.PLEX.removeRecord(112);
+
+        m25Helper.save("tests/data/WriteTest_RemovedRecordM25_ROSTER-Official").then(() => {
+            const m25Helper2 = new MaddenRosterHelper();
+            m25Helper2.load("tests/data/WriteTest_RemovedRecordM25_ROSTER-Official").then(() => {
+                // Ensure the entry has been removed
+                expect(m25Helper2.file.PLEX.records.numEntries).to.equal(originalTableLength - 1);
+                expect(m25Helper2.file.PLEX.records.find((record) => {
+                    return record.index === 112;
+                })).to.equal(undefined);
             });
         });
     });

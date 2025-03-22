@@ -31,7 +31,10 @@ class TDB2Writer extends Readable {
                 // If the table is not a compressed record storage table, write the record data normally
                 if(table.unknown2 !== 0x2)
                 {
-                    Object.keys(record.fields).map((fieldKey) => {
+                    // Write the fields in alphabetical order
+                    const sortedFields = Object.keys(record.fields).sort();
+                    
+                    sortedFields.map((fieldKey) => {
                         const field = record.fields[fieldKey];
                         // Write the field key
                         this.push(field.rawKey);
@@ -64,7 +67,10 @@ class TDB2Writer extends Readable {
                     decompressedBufs.push(Buffer.from(utilService.compress6BitString("CHVI")));
                     decompressedBufs.push(Buffer.from([0x03]));
 
-                    Object.keys(record.fields).map((fieldKey) => {
+                    // Write the fields in alphabetical order
+                    const sortedFields = Object.keys(record.fields).sort();
+
+                    sortedFields.map((fieldKey) => {
                         const field = record.fields[fieldKey];
                         decompressedBufs.push(field.rawKey);
 

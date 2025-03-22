@@ -1,5 +1,4 @@
 const utilService = require('../../services/utilService');
-const TDB2Record = require('./TDB2Record');
 
 class TDB2Table {
     constructor() {
@@ -125,6 +124,20 @@ class TDB2Table {
 
         // Update table's entry count
         this.numEntries++;
+    }
+
+    // Removes a record from the table
+    removeRecord(index) {
+        // Find the record to remove (we do it this way instead of just assuming records[index] to accomodate table 5 records since their indices are keyed)
+        const recordIndex = this._records.findIndex(record => record.index === index);
+
+        // If the record is found, remove it
+        if (recordIndex !== -1) {
+            this._records.splice(recordIndex, 1);
+
+            // Update table's entry count
+            this.numEntries--;
+        }
     }
 };
 

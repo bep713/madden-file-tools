@@ -55,6 +55,7 @@ class TDB2Parser extends FileParser {
                 record.index = utilService.readModifiedLebCompressedInteger(lebBuf);
                 if(table.unknown2 === 0x2)
                 {
+                    console.log(`Processing record at index ${record.index}`);
                     // Read LEB number for compressed byte size
                     this.bytes(0x1, (numBytesBuf) => {
                         this._readLebNumber(numBytesBuf, (lebBytesBuf) => {
@@ -89,6 +90,7 @@ class TDB2Parser extends FileParser {
     _onDecompressedTableFieldStart(recordParser, record, table)
     {
         let field = new TDB2Field();
+        console.log(recordParser.offset.toString(16));
         field.rawKey = recordParser.readBytes(4);
         field.key = utilService.getUncompressedTextFromSixBitCompression(field.rawKey.slice(0, 3));
         field.type = field.rawKey.slice(3).readUInt8(0);
@@ -99,7 +101,7 @@ class TDB2Parser extends FileParser {
             case FIELD_TYPE_INT:
                 field.raw = utilService.writeModifiedLebCompressedInteger(utilService.parseModifiedLebEncodedNumber(recordParser));
                 record.fields[field.key] = field;
-                if(field.key === 'UNWI')
+                if(field.key === 'UNWI' && recordParser.buffer[recordParser.offset] === 0)
                 {
                     field.raw = Buffer.concat([field.raw, recordParser.readBytes(1)]);
                     record.fields[field.key] = field;
@@ -138,6 +140,7 @@ class TDB2Parser extends FileParser {
                 record.fields[field.key] = field;
                 return this._checkCompressedTableRecordEnd(record, table, recordParser);
             default:
+                //console.log(recordParser.offset);
                 console.warn(`Unsupported field type: 0x${field.type.toString(16)} at index 0x${this.currentBufferIndex.toString(16)}`);
         }
     };
